@@ -452,7 +452,7 @@ export function SkillTreePage() {
           ) : null}
           <Button
             size="sm"
-            variant="secondary"
+            variant="primary"
             onClick={() => {
               setEditingNodeId(null)
               setCreateSkillModalOpen(true)
