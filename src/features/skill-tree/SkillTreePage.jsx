@@ -336,9 +336,28 @@ export function SkillTreePage() {
       </div>
 
       <Panel className="absolute left-1/2 top-4 z-10 -translate-x-1/2 px-2 py-2 shadow-md">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <div className="px-1 text-sm font-semibold text-slate-900">Skill Tree</div>
           <div className="h-5 w-px bg-slate-200" aria-hidden />
+          <div className="w-full sm:w-56">
+            <TextInput
+              aria-label="Search skills"
+              type="search"
+              autoComplete="off"
+              placeholder="Search…"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              className="h-8 px-2 py-1"
+            />
+          </div>
+          {searchHasMatches ? (
+            <div className="px-1 text-sm text-slate-600">
+              Matches {searchHighlight.matchNodeIds.size} • Highlighting{' '}
+              {searchHighlight.highlightedNodeIds.size}
+            </div>
+          ) : normalizedSearchQuery ? (
+            <div className="px-1 text-sm text-slate-600">No matches</div>
+          ) : null}
           <Button size="sm" variant="secondary" onClick={() => setCreateSkillModalOpen(true)}>
             New Skill
           </Button>
@@ -371,28 +390,6 @@ export function SkillTreePage() {
             Fit
           </IconButton>
         </div>
-      </Panel>
-
-      <Panel className="absolute left-4 top-4 z-10 w-[360px] max-h-[calc(100dvh-2rem)] overflow-auto p-4 shadow-md">
-        <h2 className="text-lg font-semibold text-slate-900">Search</h2>
-        <div className="mt-4">
-          <TextInput
-            label="Search skills"
-            type="search"
-            autoComplete="off"
-            placeholder="Filter by title…"
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-          />
-        </div>
-        {searchHasMatches ? (
-          <p className="mt-2 text-sm text-slate-600">
-            Matching {searchHighlight.matchNodeIds.size} • Highlighting{' '}
-            {searchHighlight.highlightedNodeIds.size}
-          </p>
-        ) : normalizedSearchQuery ? (
-          <p className="mt-2 text-sm text-slate-600">No matches</p>
-        ) : null}
       </Panel>
 
       <Modal
