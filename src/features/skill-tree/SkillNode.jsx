@@ -2,6 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Handle, Position } from 'reactflow'
 
+import { Button } from '@/components/ui/Button'
 import { joinClassNames } from '@/lib/utils'
 
 /**
@@ -80,6 +81,20 @@ export function SkillNode({ data, selected }) {
           {statusConfig.label}
         </span>
       </div>
+      {status === 'unlockable' ? (
+        <div className="nodrag mt-2 flex justify-end">
+          <Button size="sm" variant="secondary" onClick={data.onUnlock}>
+            Unlock
+          </Button>
+        </div>
+      ) : null}
+      {status === 'unlocked' ? (
+        <div className="nodrag mt-2 flex justify-end">
+          <Button size="sm" variant="secondary" onClick={data.onComplete}>
+            Complete
+          </Button>
+        </div>
+      ) : null}
       <Handle
         type="source"
         position={Position.Bottom}
@@ -93,9 +108,10 @@ SkillNode.propTypes = {
   data: PropTypes.shape({
     cost: PropTypes.number,
     level: PropTypes.number,
+    onComplete: PropTypes.func,
+    onUnlock: PropTypes.func,
     status: PropTypes.oneOf(['locked', 'unlockable', 'unlocked', 'completed']),
     title: PropTypes.string,
   }),
   selected: PropTypes.bool,
 }
-
