@@ -84,6 +84,7 @@ export function SkillTreePage() {
   const [searchQuery, setSearchQuery] = React.useState('')
   const [reactFlowInstance, setReactFlowInstance] = React.useState(null)
   const [createSkillModalOpen, setCreateSkillModalOpen] = React.useState(false)
+  const [editingNodeId, setEditingNodeId] = React.useState(null)
 
   const [nodes, setNodes, onNodesChange] = useNodesState(
     () => initialState.nodes,
@@ -179,6 +180,10 @@ export function SkillTreePage() {
         ...node.data,
         onUnlock: () => handleUnlockSkill(node.id),
         onComplete: () => handleCompleteSkill(node.id),
+        onEdit: () => {
+          setEditingNodeId(node.id)
+          setCreateSkillModalOpen(true)
+        },
         search: searchHasMatches
           ? {
               match: searchHighlight.matchNodeIds.has(node.id),
@@ -268,6 +273,20 @@ export function SkillTreePage() {
       .filter((title) => typeof title === 'string')
   }, [nodes])
 
+  const editingNode = React.useMemo(() => {
+    if (!editingNodeId) return null
+    return nodes.find((node) => node.id === editingNodeId) ?? null
+  }, [editingNodeId, nodes])
+
+  const titlesExcludingEditingNode = React.useMemo(() => {
+    if (!editingNodeId) return existingTitles
+
+    return nodes
+      .filter((node) => node.id !== editingNodeId)
+      .map((node) => node?.data?.title)
+      .filter((title) => typeof title === 'string')
+  }, [editingNodeId, existingTitles, nodes])
+
   const handleCreateSkill = React.useCallback(
     ({ title, description, cost, level }) => {
       const normalizedNewTitle = title.trim().toLowerCase()
@@ -313,10 +332,53 @@ export function SkillTreePage() {
   const handleCreateSkillFromModal = React.useCallback(
     (args) => {
       const created = handleCreateSkill(args)
-      if (created) setCreateSkillModalOpen(false)
+      if (created) {
+        setCreateSkillModalOpen(false)
+        setEditingNodeId(null)
+      }
       return created
     },
     [handleCreateSkill],
+  )
+
+  const handleEditSkillFromModal = React.useCallback(
+    ({ title, description, cost, level }) => {
+      if (!editingNodeId) return false
+
+      const normalizedNewTitle = title.trim().toLowerCase()
+      const existing = new Set(titlesExcludingEditingNode.map((t) => t.trim().toLowerCase()))
+      if (!normalizedNewTitle) {
+        pushToast({ variant: 'error', message: 'Title is required.' })
+        return false
+      }
+      if (existing.has(normalizedNewTitle)) {
+        pushToast({ variant: 'error', message: 'Title must be unique.' })
+        return false
+      }
+
+      setNodes((current) =>
+        current.map((node) => {
+          if (node.id !== editingNodeId) return node
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              title,
+              label: title,
+              description,
+              cost,
+              level,
+            },
+          }
+        }),
+      )
+
+      setCreateSkillModalOpen(false)
+      setEditingNodeId(null)
+      pushToast({ variant: 'success', message: `Updated skill “${title}”.` })
+      return true
+    },
+    [editingNodeId, pushToast, setNodes, titlesExcludingEditingNode],
   )
 
   const handleResetTree = React.useCallback(() => {
@@ -335,6 +397,7 @@ export function SkillTreePage() {
     setNodes(defaults.nodes)
     setEdges(defaults.edges)
     setCreateSkillModalOpen(false)
+    setEditingNodeId(null)
     setSearchQuery('')
     pushToast({ variant: 'success', message: 'Skill tree reset.' })
     reactFlowInstance?.fitView?.({ padding: 0.25 })
@@ -387,7 +450,14 @@ export function SkillTreePage() {
           ) : normalizedSearchQuery ? (
             <div className="px-1 text-sm text-slate-600">No matches</div>
           ) : null}
-          <Button size="sm" variant="secondary" onClick={() => setCreateSkillModalOpen(true)}>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              setEditingNodeId(null)
+              setCreateSkillModalOpen(true)
+            }}
+          >
             New Skill
           </Button>
           <Button size="sm" variant="secondary" onClick={handleResetTree}>
@@ -426,10 +496,27 @@ export function SkillTreePage() {
 
       <Modal
         open={createSkillModalOpen}
-        title="New skill"
-        onClose={() => setCreateSkillModalOpen(false)}
+        title={editingNodeId ? 'Edit skill' : 'New skill'}
+        onClose={() => {
+          setCreateSkillModalOpen(false)
+          setEditingNodeId(null)
+        }}
       >
-        <CreateSkillForm existingTitles={existingTitles} onCreate={handleCreateSkillFromModal} />
+        <CreateSkillForm
+          existingTitles={editingNodeId ? titlesExcludingEditingNode : existingTitles}
+          initialValues={
+            editingNodeId
+              ? {
+                  title: editingNode?.data?.title,
+                  description: editingNode?.data?.description,
+                  cost: editingNode?.data?.cost,
+                  level: editingNode?.data?.level,
+                }
+              : undefined
+          }
+          submitLabel={editingNodeId ? 'Save changes' : 'Create skill'}
+          onSubmit={editingNodeId ? handleEditSkillFromModal : handleCreateSkillFromModal}
+        />
       </Modal>
     </div>
   )

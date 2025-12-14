@@ -12,14 +12,32 @@ function normalizeTitle(rawTitle) {
 /**
  * @param {{
  *   existingTitles: string[],
- *   onCreate: (args: { title: string, description?: string, cost?: number, level?: number }) => boolean,
+ *   initialValues?: { title?: string, description?: string, cost?: number, level?: number },
+ *   submitLabel?: string,
+ *   onSubmit: (args: { title: string, description?: string, cost?: number, level?: number }) => boolean,
  * }} props
  */
-export function CreateSkillForm({ existingTitles, onCreate }) {
-  const [title, setTitle] = React.useState('')
-  const [description, setDescription] = React.useState('')
-  const [cost, setCost] = React.useState('')
-  const [level, setLevel] = React.useState('')
+export function CreateSkillForm({
+  existingTitles,
+  initialValues,
+  submitLabel = 'Create skill',
+  onSubmit,
+}) {
+  const [title, setTitle] = React.useState(initialValues?.title ?? '')
+  const [description, setDescription] = React.useState(initialValues?.description ?? '')
+  const [cost, setCost] = React.useState(
+    typeof initialValues?.cost === 'number' ? String(initialValues.cost) : '',
+  )
+  const [level, setLevel] = React.useState(
+    typeof initialValues?.level === 'number' ? String(initialValues.level) : '',
+  )
+
+  React.useEffect(() => {
+    setTitle(initialValues?.title ?? '')
+    setDescription(initialValues?.description ?? '')
+    setCost(typeof initialValues?.cost === 'number' ? String(initialValues.cost) : '')
+    setLevel(typeof initialValues?.level === 'number' ? String(initialValues.level) : '')
+  }, [initialValues])
 
   const normalizedTitles = React.useMemo(() => {
     return new Set(existingTitles.map(normalizeTitle))
@@ -43,14 +61,14 @@ export function CreateSkillForm({ existingTitles, onCreate }) {
     const nextCost = cost.trim() ? Number(cost) : undefined
     const nextLevel = level.trim() ? Number(level) : undefined
 
-    const created = onCreate({
+    const saved = onSubmit({
       title: nextTitle,
       description: description.trim() ? description.trim() : undefined,
       cost: Number.isFinite(nextCost) ? nextCost : undefined,
       level: Number.isFinite(nextLevel) ? nextLevel : undefined,
     })
 
-    if (created) {
+    if (saved) {
       setTitle('')
       setDescription('')
       setCost('')
@@ -100,7 +118,7 @@ export function CreateSkillForm({ existingTitles, onCreate }) {
       />
       <div className="flex items-center justify-end">
         <Button type="submit" disabled={Boolean(titleError) || !title.trim()}>
-          Create skill
+          {submitLabel}
         </Button>
       </div>
     </form>
@@ -109,5 +127,12 @@ export function CreateSkillForm({ existingTitles, onCreate }) {
 
 CreateSkillForm.propTypes = {
   existingTitles: PropTypes.arrayOf(PropTypes.string).isRequired,
-  onCreate: PropTypes.func.isRequired,
+  initialValues: PropTypes.shape({
+    cost: PropTypes.number,
+    description: PropTypes.string,
+    level: PropTypes.number,
+    title: PropTypes.string,
+  }),
+  onSubmit: PropTypes.func.isRequired,
+  submitLabel: PropTypes.string,
 }

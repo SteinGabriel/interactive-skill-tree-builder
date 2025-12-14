@@ -44,6 +44,7 @@ function getStatusConfig(status) {
  *     status?: SkillStatus,
  *     cost?: number,
  *     level?: number,
+ *     onEdit?: () => void,
  *     search?: { match?: boolean, highlighted?: boolean, dimmed?: boolean },
  *   },
  *   selected?: boolean,
@@ -98,16 +99,29 @@ export function SkillNode({ data, selected }) {
         </span>
       </div>
       {status === 'unlockable' ? (
-        <div className="nodrag mt-2 flex justify-end">
+        <div className="nodrag mt-2 flex items-center justify-end gap-2">
+          <Button size="sm" variant="secondary" onClick={data.onEdit}>
+            Edit
+          </Button>
           <Button size="sm" variant="secondary" onClick={data.onUnlock}>
             Unlock
           </Button>
         </div>
       ) : null}
       {status === 'unlocked' ? (
-        <div className="nodrag mt-2 flex justify-end">
+        <div className="nodrag mt-2 flex items-center justify-end gap-2">
+          <Button size="sm" variant="secondary" onClick={data.onEdit}>
+            Edit
+          </Button>
           <Button size="sm" variant="secondary" onClick={data.onComplete}>
             Complete
+          </Button>
+        </div>
+      ) : null}
+      {status !== 'unlockable' && status !== 'unlocked' ? (
+        <div className="nodrag mt-2 flex justify-end">
+          <Button size="sm" variant="secondary" onClick={data.onEdit}>
+            Edit
           </Button>
         </div>
       ) : null}
@@ -125,6 +139,7 @@ SkillNode.propTypes = {
     cost: PropTypes.number,
     level: PropTypes.number,
     onComplete: PropTypes.func,
+    onEdit: PropTypes.func,
     onUnlock: PropTypes.func,
     search: PropTypes.shape({
       dimmed: PropTypes.bool,
