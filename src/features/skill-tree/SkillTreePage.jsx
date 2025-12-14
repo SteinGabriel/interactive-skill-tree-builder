@@ -17,7 +17,11 @@ import { TextInput } from '@/components/ui/TextInput'
 import { useToast } from '@/hooks/useToast'
 import { createId } from '@/lib/utils'
 import { getSearchHighlightSets, validateEdgeCreation } from '@/lib/helpers/graph'
-import { loadFromLocalStorage, saveToLocalStorage } from '@/lib/helpers/persistence'
+import {
+  loadFromLocalStorage,
+  saveToLocalStorage,
+  SKILL_TREE_STORAGE_KEY,
+} from '@/lib/helpers/persistence'
 import { CreateSkillForm } from '@/features/skill-tree/CreateSkillForm'
 import { SkillNode } from '@/features/skill-tree/SkillNode'
 import { deriveNodeStatuses } from '@/lib/helpers/graph'
@@ -26,26 +30,30 @@ import { deriveNodeStatuses } from '@/lib/helpers/graph'
  * @typedef {import('@/lib/types').SkillStatus} SkillStatus
  */
 
+function createDefaultCanvasState() {
+  return {
+    nodes: [
+      {
+        id: 'root',
+        position: { x: 0, y: 0 },
+        type: 'skill',
+        data: {
+          title: 'Root Skill',
+          label: 'Root Skill',
+          status: /** @type {SkillStatus} */ ('unlockable'),
+        },
+      },
+    ],
+    edges: [],
+  }
+}
+
 function getInitialState() {
   const persisted = loadFromLocalStorage()
   const hasPersistedState = persisted.nodes.length > 0 || persisted.edges.length > 0
 
   if (!hasPersistedState) {
-    return {
-      nodes: [
-        {
-          id: 'root',
-          position: { x: 0, y: 0 },
-          type: 'skill',
-          data: {
-            title: 'Root Skill',
-            label: 'Root Skill',
-            status: /** @type {SkillStatus} */ ('unlockable'),
-          },
-        },
-      ],
-      edges: [],
-    }
+    return createDefaultCanvasState()
   }
 
   return {
@@ -311,6 +319,27 @@ export function SkillTreePage() {
     [handleCreateSkill],
   )
 
+  const handleResetTree = React.useCallback(() => {
+    const confirmed = window.confirm(
+      'Reset skill tree? This clears all skills and prerequisites.',
+    )
+    if (!confirmed) return
+
+    try {
+      window.localStorage.removeItem(SKILL_TREE_STORAGE_KEY)
+    } catch {
+      // ignore storage errors; we still reset in-memory state
+    }
+
+    const defaults = createDefaultCanvasState()
+    setNodes(defaults.nodes)
+    setEdges(defaults.edges)
+    setCreateSkillModalOpen(false)
+    setSearchQuery('')
+    pushToast({ variant: 'success', message: 'Skill tree reset.' })
+    reactFlowInstance?.fitView?.({ padding: 0.25 })
+  }, [pushToast, reactFlowInstance, setEdges, setNodes])
+
   return (
     <div className="relative h-dvh w-dvw overflow-hidden bg-slate-50">
       <div className="absolute inset-0">
@@ -360,6 +389,9 @@ export function SkillTreePage() {
           ) : null}
           <Button size="sm" variant="secondary" onClick={() => setCreateSkillModalOpen(true)}>
             New Skill
+          </Button>
+          <Button size="sm" variant="secondary" onClick={handleResetTree}>
+            Reset
           </Button>
           <div className="h-5 w-px bg-slate-200" aria-hidden />
           <IconButton
