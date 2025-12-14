@@ -41,7 +41,6 @@
 
 /**
  * @typedef {Object} PersistedTreeState
- * @property {number} version
  * @property {PersistedNode[]} nodes
  * @property {PersistedEdge[]} edges
  */
