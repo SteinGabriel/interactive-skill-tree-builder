@@ -12,7 +12,7 @@ function normalizeTitle(rawTitle) {
 /**
  * @param {{
  *   existingTitles: string[],
- *   onCreate: (args: { title: string, description?: string, cost?: number, level?: number }) => void,
+ *   onCreate: (args: { title: string, description?: string, cost?: number, level?: number }) => boolean,
  * }} props
  */
 export function CreateSkillForm({ existingTitles, onCreate }) {
@@ -43,17 +43,19 @@ export function CreateSkillForm({ existingTitles, onCreate }) {
     const nextCost = cost.trim() ? Number(cost) : undefined
     const nextLevel = level.trim() ? Number(level) : undefined
 
-    onCreate({
+    const created = onCreate({
       title: nextTitle,
       description: description.trim() ? description.trim() : undefined,
       cost: Number.isFinite(nextCost) ? nextCost : undefined,
       level: Number.isFinite(nextLevel) ? nextLevel : undefined,
     })
 
-    setTitle('')
-    setDescription('')
-    setCost('')
-    setLevel('')
+    if (created) {
+      setTitle('')
+      setDescription('')
+      setCost('')
+      setLevel('')
+    }
   }
 
   return (
@@ -66,6 +68,7 @@ export function CreateSkillForm({ existingTitles, onCreate }) {
         hint="Titles must be unique (case-insensitive)."
         error={titleError}
         required
+        autoFocus
       />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <TextInput
@@ -108,4 +111,3 @@ CreateSkillForm.propTypes = {
   existingTitles: PropTypes.arrayOf(PropTypes.string).isRequired,
   onCreate: PropTypes.func.isRequired,
 }
-

@@ -10,7 +10,9 @@ import ReactFlow, {
 import 'reactflow/dist/style.css'
 
 import { Panel } from '@/components/ui/Panel'
+import { Button } from '@/components/ui/Button'
 import { IconButton } from '@/components/ui/IconButton'
+import { Modal } from '@/components/ui/Modal'
 import { TextInput } from '@/components/ui/TextInput'
 import { useToast } from '@/hooks/useToast'
 import { createId } from '@/lib/utils'
@@ -73,6 +75,7 @@ export function SkillTreePage() {
   const [initialState] = React.useState(() => getInitialState())
   const [searchQuery, setSearchQuery] = React.useState('')
   const [reactFlowInstance, setReactFlowInstance] = React.useState(null)
+  const [createSkillModalOpen, setCreateSkillModalOpen] = React.useState(false)
 
   const [nodes, setNodes, onNodesChange] = useNodesState(
     () => initialState.nodes,
@@ -263,11 +266,11 @@ export function SkillTreePage() {
       const existing = new Set(existingTitles.map((t) => t.trim().toLowerCase()))
       if (!normalizedNewTitle) {
         pushToast({ variant: 'error', message: 'Title is required.' })
-        return
+        return false
       }
       if (existing.has(normalizedNewTitle)) {
         pushToast({ variant: 'error', message: 'Title must be unique.' })
-        return
+        return false
       }
 
       const index = nodes.length
@@ -294,8 +297,18 @@ export function SkillTreePage() {
       ])
 
       pushToast({ variant: 'success', message: `Created skill “${title}”.` })
+      return true
     },
     [existingTitles, nodes.length, pushToast, setNodes],
+  )
+
+  const handleCreateSkillFromModal = React.useCallback(
+    (args) => {
+      const created = handleCreateSkill(args)
+      if (created) setCreateSkillModalOpen(false)
+      return created
+    },
+    [handleCreateSkill],
   )
 
   return (
@@ -325,6 +338,10 @@ export function SkillTreePage() {
       <Panel className="absolute left-1/2 top-4 z-10 -translate-x-1/2 px-2 py-2 shadow-md">
         <div className="flex items-center gap-2">
           <div className="px-1 text-sm font-semibold text-slate-900">Skill Tree</div>
+          <div className="h-5 w-px bg-slate-200" aria-hidden />
+          <Button size="sm" variant="secondary" onClick={() => setCreateSkillModalOpen(true)}>
+            New Skill
+          </Button>
           <div className="h-5 w-px bg-slate-200" aria-hidden />
           <IconButton
             aria-label="Zoom out"
@@ -376,12 +393,15 @@ export function SkillTreePage() {
         ) : normalizedSearchQuery ? (
           <p className="mt-2 text-sm text-slate-600">No matches</p>
         ) : null}
-        <hr className="my-6 border-slate-200" />
-        <h2 className="text-lg font-semibold text-slate-900">Create skill</h2>
-        <div className="mt-4">
-          <CreateSkillForm existingTitles={existingTitles} onCreate={handleCreateSkill} />
-        </div>
       </Panel>
+
+      <Modal
+        open={createSkillModalOpen}
+        title="New skill"
+        onClose={() => setCreateSkillModalOpen(false)}
+      >
+        <CreateSkillForm existingTitles={existingTitles} onCreate={handleCreateSkillFromModal} />
+      </Modal>
     </div>
   )
 }
