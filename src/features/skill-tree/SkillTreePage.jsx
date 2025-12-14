@@ -4,7 +4,7 @@ import 'reactflow/dist/style.css'
 
 import { Panel } from '@/components/ui/Panel'
 import { useToast } from '@/hooks/useToast'
-import { createId } from '@/lib/helpers/id'
+import { createId } from '@/lib/utils'
 import { CreateSkillForm } from '@/features/skill-tree/CreateSkillForm'
 
 /**
