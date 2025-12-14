@@ -2,6 +2,8 @@
 
 Client-side React app for creating and interacting with a skill tree: add skills as nodes, connect prerequisites as edges, and unlock/complete skills based on prerequisite completion.
 
+Live demo: https://steingabriel.github.io/interactive-skill-tree-builder/
+
 ## Features
 
 - Create skill nodes (title required + unique, optional description, cost, level).
