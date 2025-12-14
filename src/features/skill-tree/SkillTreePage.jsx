@@ -22,7 +22,7 @@ import {
   saveToLocalStorage,
   SKILL_TREE_STORAGE_KEY,
 } from '@/lib/helpers/persistence'
-import { CreateSkillForm } from '@/features/skill-tree/CreateSkillForm'
+import { SkillForm } from '@/features/skill-tree/SkillForm'
 import { SkillNode } from '@/features/skill-tree/SkillNode'
 import { deriveNodeStatuses } from '@/lib/helpers/graph'
 
@@ -496,7 +496,7 @@ export function SkillTreePage() {
           setEditingNodeId(null)
         }}
       >
-        <CreateSkillForm
+        <SkillForm
           existingTitles={editingNodeId ? titlesExcludingEditingNode : existingTitles}
           initialValues={
             editingNodeId

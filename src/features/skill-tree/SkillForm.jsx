@@ -17,7 +17,7 @@ function normalizeTitle(rawTitle) {
  *   onSubmit: (args: { title: string, description?: string, cost?: number, level?: number }) => boolean,
  * }} props
  */
-export function CreateSkillForm({
+export function SkillForm({
   existingTitles,
   initialValues,
   submitLabel = 'Create skill',
@@ -139,7 +139,7 @@ export function CreateSkillForm({
   )
 }
 
-CreateSkillForm.propTypes = {
+SkillForm.propTypes = {
   existingTitles: PropTypes.arrayOf(PropTypes.string).isRequired,
   initialValues: PropTypes.shape({
     cost: PropTypes.number,
