@@ -23,21 +23,35 @@ export function CreateSkillForm({
   submitLabel = 'Create skill',
   onSubmit,
 }) {
+  const createDefaults = React.useMemo(() => ({ cost: 1, level: 1 }), [])
+
   const [title, setTitle] = React.useState(initialValues?.title ?? '')
   const [description, setDescription] = React.useState(initialValues?.description ?? '')
-  const [cost, setCost] = React.useState(
-    typeof initialValues?.cost === 'number' ? String(initialValues.cost) : '',
-  )
-  const [level, setLevel] = React.useState(
-    typeof initialValues?.level === 'number' ? String(initialValues.level) : '',
-  )
+  const [cost, setCost] = React.useState(() => {
+    if (typeof initialValues?.cost === 'number') return String(initialValues.cost)
+    if (initialValues) return ''
+    return String(createDefaults.cost)
+  })
+  const [level, setLevel] = React.useState(() => {
+    if (typeof initialValues?.level === 'number') return String(initialValues.level)
+    if (initialValues) return ''
+    return String(createDefaults.level)
+  })
 
   React.useEffect(() => {
     setTitle(initialValues?.title ?? '')
     setDescription(initialValues?.description ?? '')
-    setCost(typeof initialValues?.cost === 'number' ? String(initialValues.cost) : '')
-    setLevel(typeof initialValues?.level === 'number' ? String(initialValues.level) : '')
-  }, [initialValues])
+    setCost(() => {
+      if (typeof initialValues?.cost === 'number') return String(initialValues.cost)
+      if (initialValues) return ''
+      return String(createDefaults.cost)
+    })
+    setLevel(() => {
+      if (typeof initialValues?.level === 'number') return String(initialValues.level)
+      if (initialValues) return ''
+      return String(createDefaults.level)
+    })
+  }, [createDefaults.cost, createDefaults.level, initialValues])
 
   const normalizedTitles = React.useMemo(() => {
     return new Set(existingTitles.map(normalizeTitle))
@@ -71,8 +85,8 @@ export function CreateSkillForm({
     if (saved) {
       setTitle('')
       setDescription('')
-      setCost('')
-      setLevel('')
+      setCost(String(createDefaults.cost))
+      setLevel(String(createDefaults.level))
     }
   }
 
