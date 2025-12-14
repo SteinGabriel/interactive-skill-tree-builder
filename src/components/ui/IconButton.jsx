@@ -1,5 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import { joinClassNames } from '@/lib/utils'
 
 const BASE_CLASSES =
   'inline-flex items-center justify-center rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ring-offset-white'
@@ -15,10 +16,6 @@ const SIZE_CLASSES = {
   sm: 'h-8 w-8',
   md: 'h-10 w-10',
   lg: 'h-12 w-12',
-}
-
-function joinClassNames(...values) {
-  return values.filter(Boolean).join(' ')
 }
 
 /**

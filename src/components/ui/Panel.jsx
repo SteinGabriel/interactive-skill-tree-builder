@@ -1,11 +1,8 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import { joinClassNames } from '@/lib/utils'
 
 const BASE_CLASSES = 'rounded-lg border border-slate-200 bg-white shadow-sm'
-
-function joinClassNames(...values) {
-  return values.filter(Boolean).join(' ')
-}
 
 /**
  * @param {React.ComponentPropsWithoutRef<'div'>} props
@@ -18,4 +15,3 @@ Panel.propTypes = {
   children: PropTypes.node,
   className: PropTypes.string,
 }
-

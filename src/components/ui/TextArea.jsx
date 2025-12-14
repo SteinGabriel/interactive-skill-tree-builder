@@ -1,5 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import { joinClassNames } from '@/lib/utils'
 
 const LABEL_CLASSES = 'text-sm font-medium text-slate-900'
 const HELP_TEXT_CLASSES = 'text-sm text-slate-600'
@@ -7,10 +8,6 @@ const ERROR_TEXT_CLASSES = 'text-sm text-rose-700'
 
 const BASE_TEXTAREA_CLASSES =
   'block w-full resize-y rounded-md border bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ring-offset-white'
-
-function joinClassNames(...values) {
-  return values.filter(Boolean).join(' ')
-}
 
 /**
  * @param {{
