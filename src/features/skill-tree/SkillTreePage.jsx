@@ -1,5 +1,11 @@
 import React from 'react'
-import ReactFlow, { Background, Controls, useEdgesState, useNodesState } from 'reactflow'
+import ReactFlow, {
+  addEdge,
+  Background,
+  Controls,
+  useEdgesState,
+  useNodesState,
+} from 'reactflow'
 import 'reactflow/dist/style.css'
 
 import { Panel } from '@/components/ui/Panel'
@@ -32,7 +38,23 @@ export function SkillTreePage() {
       },
     },
   ])
-  const [edges, _setEdges, onEdgesChange] = useEdgesState([])
+  const [edges, setEdges, onEdgesChange] = useEdgesState([])
+
+  const onConnect = React.useCallback(
+    (connection) => {
+      setEdges((current) =>
+        addEdge(
+          {
+            ...connection,
+            id: createId(),
+            type: 'smoothstep',
+          },
+          current,
+        ),
+      )
+    },
+    [setEdges],
+  )
 
   const existingTitles = React.useMemo(() => {
     return nodes
@@ -82,21 +104,23 @@ export function SkillTreePage() {
   )
 
   return (
-    <div className="grid min-h-[calc(100vh-2rem)] grid-cols-1 gap-4 p-4 lg:grid-cols-[360px_1fr]">
-      <Panel className="p-4">
+    <div className="grid h-dvh grid-cols-1 grid-rows-[auto_1fr] gap-4 p-4 lg:grid-cols-[360px_1fr] lg:grid-rows-1">
+      <Panel className="max-h-[40dvh] overflow-auto p-4 lg:max-h-none">
         <h2 className="text-lg font-semibold text-slate-900">Create skill</h2>
         <div className="mt-4">
           <CreateSkillForm existingTitles={existingTitles} onCreate={handleCreateSkill} />
         </div>
       </Panel>
-      <Panel className="relative overflow-hidden">
+      <Panel className="relative min-h-0 overflow-hidden">
         <ReactFlow
           nodes={nodes}
           edges={edges}
           nodeTypes={nodeTypes}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
           fitView
+          className="h-full w-full"
         >
           <Background />
           <Controls />
