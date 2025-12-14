@@ -285,8 +285,29 @@ export function SkillTreePage() {
   )
 
   return (
-    <div className="grid h-dvh grid-cols-1 grid-rows-[auto_1fr] gap-4 p-4 lg:grid-cols-[360px_1fr] lg:grid-rows-1">
-      <Panel className="max-h-[40dvh] overflow-auto p-4 lg:max-h-none">
+    <div className="relative h-dvh w-dvw overflow-hidden bg-slate-50">
+      <div className="absolute inset-0">
+        <ReactFlow
+          nodes={nodesForRender}
+          edges={edgesForRender}
+          nodeTypes={nodeTypes}
+          defaultEdgeOptions={{
+            type: 'smoothstep',
+            markerEnd: { type: MarkerType.ArrowClosed, color: '#64748b' },
+            style: { stroke: '#64748b', strokeWidth: 2 },
+          }}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          fitView
+          className="h-full w-full"
+        >
+          <Background />
+          <Controls />
+        </ReactFlow>
+      </div>
+
+      <Panel className="absolute left-4 top-4 z-10 w-[360px] max-h-[calc(100dvh-2rem)] overflow-auto p-4 shadow-md">
         <h2 className="text-lg font-semibold text-slate-900">Search</h2>
         <div className="mt-4">
           <TextInput
@@ -311,26 +332,6 @@ export function SkillTreePage() {
         <div className="mt-4">
           <CreateSkillForm existingTitles={existingTitles} onCreate={handleCreateSkill} />
         </div>
-      </Panel>
-      <Panel className="relative min-h-0 overflow-hidden">
-        <ReactFlow
-          nodes={nodesForRender}
-          edges={edgesForRender}
-          nodeTypes={nodeTypes}
-          defaultEdgeOptions={{
-            type: 'smoothstep',
-            markerEnd: { type: MarkerType.ArrowClosed, color: '#64748b' },
-            style: { stroke: '#64748b', strokeWidth: 2 },
-          }}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          fitView
-          className="h-full w-full"
-        >
-          <Background />
-          <Controls />
-        </ReactFlow>
       </Panel>
     </div>
   )
