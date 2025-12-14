@@ -91,7 +91,7 @@ export function deriveNodeStatuses(nodes, edges) {
 }
 
 /**
- * @typedef {'self_loop' | 'duplicate'} EdgeInvalidReason
+ * @typedef {'self_loop' | 'duplicate' | 'direct_cycle'} EdgeInvalidReason
  */
 
 /**
@@ -107,8 +107,15 @@ export function deriveNodeStatuses(nodes, edges) {
 export function validateEdgeCreation({ source, target, edges }) {
   if (source === target) return { ok: false, reason: 'self_loop' }
 
-  const isDuplicate = edges.some((edge) => edge.source === source && edge.target === target)
+  const isDuplicate = edges.some(
+    (edge) => edge.source === source && edge.target === target,
+  )
   if (isDuplicate) return { ok: false, reason: 'duplicate' }
+
+  const createsDirectCycle = edges.some(
+    (edge) => edge.source === target && edge.target === source,
+  )
+  if (createsDirectCycle) return { ok: false, reason: 'direct_cycle' }
 
   return { ok: true }
 }

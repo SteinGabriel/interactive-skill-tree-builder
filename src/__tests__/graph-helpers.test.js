@@ -114,12 +114,18 @@ describe('graph helpers', () => {
       ).toEqual({ ok: false, reason: 'duplicate' })
     })
 
-    test('accepts a valid edge', () => {
+    test('rejects direct 2-node cycles (A -> B -> A)', () => {
       const edges = [{ source: 'A', target: 'B' }]
       expect(
         validateEdgeCreation({ source: 'B', target: 'A', edges }),
+      ).toEqual({ ok: false, reason: 'direct_cycle' })
+    })
+
+    test('accepts a valid edge', () => {
+      const edges = [{ source: 'A', target: 'B' }]
+      expect(
+        validateEdgeCreation({ source: 'B', target: 'C', edges }),
       ).toEqual({ ok: true })
     })
   })
 })
-
