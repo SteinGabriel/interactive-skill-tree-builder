@@ -1,6 +1,7 @@
 import {
   deriveNodeStatuses,
   getInboundPrereqIds,
+  getSearchHighlightSets,
   indexNodesById,
   isNodeUnlockable,
   validateEdgeCreation,
@@ -126,6 +127,67 @@ describe('graph helpers', () => {
       expect(
         validateEdgeCreation({ source: 'B', target: 'C', edges }),
       ).toEqual({ ok: true })
+    })
+  })
+
+  describe('getSearchHighlightSets', () => {
+    test('returns empty sets for an empty query', () => {
+      const nodes = [{ id: 'A', data: { title: 'Alpha' } }]
+      const edges = [{ source: 'A', target: 'B' }]
+      const result = getSearchHighlightSets({ nodes, edges, query: '   ' })
+
+      expect(result.matchNodeIds.size).toBe(0)
+      expect(result.highlightedNodeIds.size).toBe(0)
+      expect(result.highlightedEdgeKeys.size).toBe(0)
+    })
+
+    test('highlights matched node and its prerequisite ancestors', () => {
+      const nodes = [
+        { id: 'A', data: { title: 'Intro' } },
+        { id: 'B', data: { title: 'Basics' } },
+        { id: 'C', data: { title: 'Advanced React' } },
+      ]
+      const edges = [
+        { source: 'A', target: 'B' },
+        { source: 'B', target: 'C' },
+      ]
+
+      const result = getSearchHighlightSets({ nodes, edges, query: 'react' })
+
+      expect(result.matchNodeIds).toEqual(new Set(['C']))
+      expect(result.highlightedNodeIds).toEqual(new Set(['C', 'B', 'A']))
+      expect(result.highlightedEdgeKeys).toEqual(new Set(['B->C', 'A->B']))
+    })
+
+    test('returns no highlights when there are no matches', () => {
+      const nodes = [
+        { id: 'A', data: { title: 'Intro' } },
+        { id: 'B', data: { title: 'Basics' } },
+      ]
+      const edges = [{ source: 'A', target: 'B' }]
+
+      const result = getSearchHighlightSets({ nodes, edges, query: 'missing' })
+      expect(result.matchNodeIds.size).toBe(0)
+      expect(result.highlightedNodeIds.size).toBe(0)
+      expect(result.highlightedEdgeKeys.size).toBe(0)
+    })
+
+    test('handles multiple prerequisite branches to a match', () => {
+      const nodes = [
+        { id: 'A', data: { title: 'Math' } },
+        { id: 'B', data: { title: 'Programming' } },
+        { id: 'C', data: { title: 'Data Structures' } },
+      ]
+      const edges = [
+        { source: 'A', target: 'C' },
+        { source: 'B', target: 'C' },
+      ]
+
+      const result = getSearchHighlightSets({ nodes, edges, query: 'data' })
+
+      expect(result.matchNodeIds).toEqual(new Set(['C']))
+      expect(result.highlightedNodeIds).toEqual(new Set(['C', 'A', 'B']))
+      expect(result.highlightedEdgeKeys).toEqual(new Set(['A->C', 'B->C']))
     })
   })
 })
