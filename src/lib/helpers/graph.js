@@ -10,9 +10,7 @@
  * @returns {string[]}
  */
 export function getInboundPrereqIds(edges, nodeId) {
-  /** @type {string[]} */
   const prereqIds = []
-  /** @type {Set<string>} */
   const seen = new Set()
 
   for (const edge of edges) {
@@ -30,7 +28,6 @@ export function getInboundPrereqIds(edges, nodeId) {
  * @returns {Map<string, { id: string, data: { status: SkillStatus } }>}
  */
 export function indexNodesById(nodes) {
-  /** @type {Map<string, { id: string, data: { status: SkillStatus } }>} */
   const nodesById = new Map()
   for (const node of nodes) nodesById.set(node.id, node)
   return nodesById
@@ -107,15 +104,81 @@ export function deriveNodeStatuses(nodes, edges) {
 export function validateEdgeCreation({ source, target, edges }) {
   if (source === target) return { ok: false, reason: 'self_loop' }
 
-  const isDuplicate = edges.some(
-    (edge) => edge.source === source && edge.target === target,
-  )
+  const isDuplicate = edges.some((edge) => edge.source === source && edge.target === target)
   if (isDuplicate) return { ok: false, reason: 'duplicate' }
 
-  const createsDirectCycle = edges.some(
-    (edge) => edge.source === target && edge.target === source,
-  )
+  const createsDirectCycle = edges.some((edge) => edge.source === target && edge.target === source)
   if (createsDirectCycle) return { ok: false, reason: 'direct_cycle' }
 
   return { ok: true }
+}
+
+/**
+ * Computes search highlight sets:
+ * - matched nodes: title includes query (case-insensitive)
+ * - highlighted nodes: matched nodes + all prerequisite ancestors
+ * - highlighted edges: prerequisite edges along those ancestor paths
+ *
+ * @param {{
+ *   nodes: { id: string, data?: { title?: string } }[],
+ *   edges: { source: string, target: string }[],
+ *   query: string,
+ * }} args
+ * @returns {{
+ *   matchNodeIds: Set<string>,
+ *   highlightedNodeIds: Set<string>,
+ *   highlightedEdgeKeys: Set<string>,
+ * }}
+ */
+export function getSearchHighlightSets({ nodes, edges, query }) {
+  const normalizedQuery = typeof query === 'string' ? query.trim().toLowerCase() : ''
+
+  const matchNodeIds = new Set()
+  const highlightedNodeIds = new Set()
+  const highlightedEdgeKeys = new Set()
+
+  if (!normalizedQuery) {
+    return { matchNodeIds, highlightedNodeIds, highlightedEdgeKeys }
+  }
+
+  for (const node of nodes) {
+    const title = node?.data?.title
+    if (typeof title !== 'string') continue
+    if (!title.toLowerCase().includes(normalizedQuery)) continue
+    matchNodeIds.add(node.id)
+  }
+
+  if (matchNodeIds.size === 0) {
+    return { matchNodeIds, highlightedNodeIds, highlightedEdgeKeys }
+  }
+
+  const sourcesByTarget = new Map()
+  for (const edge of edges) {
+    const sources = sourcesByTarget.get(edge.target)
+    if (sources) {
+      sources.push(edge.source)
+    } else {
+      sourcesByTarget.set(edge.target, [edge.source])
+    }
+  }
+
+  const stack = Array.from(matchNodeIds)
+  for (const nodeId of stack) highlightedNodeIds.add(nodeId)
+
+  while (stack.length) {
+    const current = stack.pop()
+    if (!current) continue
+
+    const sources = sourcesByTarget.get(current)
+    if (!sources) continue
+
+    for (const source of sources) {
+      highlightedEdgeKeys.add(`${source}->${current}`)
+      if (highlightedNodeIds.has(source)) continue
+      highlightedNodeIds.add(source)
+      stack.push(source)
+    }
+  }
+
+  return { matchNodeIds, highlightedNodeIds, highlightedEdgeKeys }
 }

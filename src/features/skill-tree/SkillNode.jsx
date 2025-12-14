@@ -39,7 +39,13 @@ function getStatusConfig(status) {
 
 /**
  * @param {{
- *   data: { title?: string, status?: SkillStatus, cost?: number, level?: number },
+ *   data: {
+ *     title?: string,
+ *     status?: SkillStatus,
+ *     cost?: number,
+ *     level?: number,
+ *     search?: { match?: boolean, highlighted?: boolean, dimmed?: boolean },
+ *   },
  *   selected?: boolean,
  * }} props
  */
@@ -47,6 +53,9 @@ export function SkillNode({ data, selected }) {
   const title = typeof data?.title === 'string' && data.title.trim() ? data.title : 'Untitled'
   const status = data?.status ?? 'locked'
   const statusConfig = getStatusConfig(status)
+  const searchMatch = data?.search?.match === true
+  const searchHighlighted = data?.search?.highlighted === true
+  const searchDimmed = data?.search?.dimmed === true
 
   const metaParts = []
   if (typeof data?.cost === 'number') metaParts.push(`Cost: ${data.cost}`)
@@ -56,7 +65,14 @@ export function SkillNode({ data, selected }) {
     <div
       className={joinClassNames(
         'w-56 rounded-lg border bg-white px-3 py-2 shadow-sm',
-        selected ? 'border-sky-400 ring-2 ring-sky-200' : 'border-slate-200',
+        searchDimmed ? 'opacity-30' : null,
+        selected
+          ? 'border-sky-400 ring-2 ring-sky-200'
+          : searchMatch
+            ? 'border-fuchsia-400 ring-2 ring-fuchsia-200'
+            : searchHighlighted
+              ? 'border-sky-300 ring-1 ring-sky-100 shadow-md'
+              : 'border-slate-200',
       )}
     >
       <Handle
@@ -110,6 +126,11 @@ SkillNode.propTypes = {
     level: PropTypes.number,
     onComplete: PropTypes.func,
     onUnlock: PropTypes.func,
+    search: PropTypes.shape({
+      dimmed: PropTypes.bool,
+      highlighted: PropTypes.bool,
+      match: PropTypes.bool,
+    }),
     status: PropTypes.oneOf(['locked', 'unlockable', 'unlocked', 'completed']),
     title: PropTypes.string,
   }),

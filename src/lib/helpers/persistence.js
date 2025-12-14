@@ -70,14 +70,11 @@ function coerceNode(node) {
 function coerceEdge(value) {
   if (!value || typeof value !== 'object') return null
 
-  // @ts-ignore - JS project; runtime validation only.
   const source = value.source
-  // @ts-ignore - JS project; runtime validation only.
   const target = value.target
   if (typeof source !== 'string' || typeof target !== 'string') return null
   if (source.trim() === '' || target.trim() === '') return null
 
-  // @ts-ignore - JS project; runtime validation only.
   const id =
     typeof value.id === 'string' && value.id.trim() !== '' ? value.id : `${source}->${target}`
 
@@ -93,9 +90,7 @@ function coerceTreeState(value) {
     throw new Error('Invalid persisted state shape')
   }
 
-  // @ts-ignore - JS project; runtime validation only.
   const rawNodes = Array.isArray(value.nodes) ? value.nodes : []
-  // @ts-ignore - JS project; runtime validation only.
   const rawEdges = Array.isArray(value.edges) ? value.edges : []
 
   const nodes = []
@@ -151,11 +146,10 @@ export function deserialize(serialized) {
     throw new Error('Serialized state must be a string')
   }
 
-  /** @type {unknown} */
   let parsed
   try {
     parsed = JSON.parse(serialized)
-  } catch (_error) {
+  } catch {
     throw new Error('Invalid JSON')
   }
 
@@ -176,7 +170,7 @@ export function loadFromLocalStorage(key = SKILL_TREE_STORAGE_KEY) {
     if (!stored) return createEmptyPersistedTreeState()
 
     return deserialize(stored)
-  } catch (_error) {
+  } catch {
     return createEmptyPersistedTreeState()
   }
 }
@@ -191,7 +185,7 @@ export function saveToLocalStorage(state, key = SKILL_TREE_STORAGE_KEY) {
     if (typeof window === 'undefined' || !window.localStorage) return false
     window.localStorage.setItem(key, serialize(state))
     return true
-  } catch (_error) {
+  } catch {
     return false
   }
 }
