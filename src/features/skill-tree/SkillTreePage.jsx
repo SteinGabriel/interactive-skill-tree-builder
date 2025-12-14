@@ -10,9 +10,10 @@ import ReactFlow, {
 import 'reactflow/dist/style.css'
 
 import { Panel } from '@/components/ui/Panel'
+import { TextInput } from '@/components/ui/TextInput'
 import { useToast } from '@/hooks/useToast'
 import { createId } from '@/lib/utils'
-import { validateEdgeCreation } from '@/lib/helpers/graph'
+import { getSearchHighlightSets, validateEdgeCreation } from '@/lib/helpers/graph'
 import { loadFromLocalStorage, saveToLocalStorage } from '@/lib/helpers/persistence'
 import { CreateSkillForm } from '@/features/skill-tree/CreateSkillForm'
 import { SkillNode } from '@/features/skill-tree/SkillNode'
@@ -69,6 +70,7 @@ export function SkillTreePage() {
   const nodeTypes = React.useMemo(() => ({ skill: SkillNode }), [])
 
   const [initialState] = React.useState(() => getInitialState())
+  const [searchQuery, setSearchQuery] = React.useState('')
 
   const [nodes, setNodes, onNodesChange] = useNodesState(
     () => initialState.nodes,
@@ -76,6 +78,8 @@ export function SkillTreePage() {
   const [edges, setEdges, onEdgesChange] = useEdgesState(
     () => initialState.edges,
   )
+
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase()
 
   const handleUnlockSkill = React.useCallback(
     (nodeId) => {
@@ -129,6 +133,20 @@ export function SkillTreePage() {
     [nodes, pushToast, setNodes],
   )
 
+  const simplifiedEdges = React.useMemo(() => {
+    return edges.map((edge) => ({ source: edge.source, target: edge.target }))
+  }, [edges])
+
+  const searchHighlight = React.useMemo(() => {
+    return getSearchHighlightSets({
+      nodes: nodes.map((node) => ({ id: node.id, data: { title: node?.data?.title } })),
+      edges: simplifiedEdges,
+      query: normalizedSearchQuery,
+    })
+  }, [nodes, normalizedSearchQuery, simplifiedEdges])
+
+  const searchHasMatches = normalizedSearchQuery && searchHighlight.matchNodeIds.size > 0
+
   const nodesForRender = React.useMemo(() => {
     return nodes.map((node) => ({
       ...node,
@@ -136,9 +154,39 @@ export function SkillTreePage() {
         ...node.data,
         onUnlock: () => handleUnlockSkill(node.id),
         onComplete: () => handleCompleteSkill(node.id),
+        search: searchHasMatches
+          ? {
+              match: searchHighlight.matchNodeIds.has(node.id),
+              highlighted: searchHighlight.highlightedNodeIds.has(node.id),
+              dimmed: !searchHighlight.highlightedNodeIds.has(node.id),
+            }
+          : undefined,
       },
     }))
-  }, [handleCompleteSkill, handleUnlockSkill, nodes])
+  }, [handleCompleteSkill, handleUnlockSkill, nodes, searchHasMatches, searchHighlight])
+
+  const edgesForRender = React.useMemo(() => {
+    if (!searchHasMatches) return edges
+
+    return edges.map((edge) => {
+      const edgeKey = `${edge.source}->${edge.target}`
+      const highlighted = searchHighlight.highlightedEdgeKeys.has(edgeKey)
+
+      const style = highlighted
+        ? { ...edge.style, opacity: 0.9, stroke: '#0ea5e9', strokeWidth: 3 }
+        : { ...edge.style, opacity: 0.15, stroke: '#94a3b8', strokeWidth: 2 }
+
+      const markerEnd = highlighted
+        ? { type: MarkerType.ArrowClosed, color: '#0ea5e9' }
+        : { type: MarkerType.ArrowClosed, color: '#94a3b8' }
+
+      return {
+        ...edge,
+        style,
+        markerEnd,
+      }
+    })
+  }, [edges, searchHasMatches, searchHighlight])
 
   const onConnect = React.useCallback(
     (connection) => {
@@ -179,12 +227,11 @@ export function SkillTreePage() {
   )
 
   React.useEffect(() => {
-    const simplifiedEdges = edges.map((edge) => ({ source: edge.source, target: edge.target }))
     const derivedNodes = deriveNodeStatuses(nodes, simplifiedEdges)
     const hasChanges = derivedNodes.some((node, index) => node !== nodes[index])
     if (!hasChanges) return
     setNodes(derivedNodes)
-  }, [edges, nodes, setNodes])
+  }, [nodes, setNodes, simplifiedEdges])
 
   React.useEffect(() => {
     saveToLocalStorage({ nodes, edges })
@@ -240,6 +287,26 @@ export function SkillTreePage() {
   return (
     <div className="grid h-dvh grid-cols-1 grid-rows-[auto_1fr] gap-4 p-4 lg:grid-cols-[360px_1fr] lg:grid-rows-1">
       <Panel className="max-h-[40dvh] overflow-auto p-4 lg:max-h-none">
+        <h2 className="text-lg font-semibold text-slate-900">Search</h2>
+        <div className="mt-4">
+          <TextInput
+            label="Search skills"
+            type="search"
+            autoComplete="off"
+            placeholder="Filter by title…"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+          />
+        </div>
+        {searchHasMatches ? (
+          <p className="mt-2 text-sm text-slate-600">
+            Matching {searchHighlight.matchNodeIds.size} • Highlighting{' '}
+            {searchHighlight.highlightedNodeIds.size}
+          </p>
+        ) : normalizedSearchQuery ? (
+          <p className="mt-2 text-sm text-slate-600">No matches</p>
+        ) : null}
+        <hr className="my-6 border-slate-200" />
         <h2 className="text-lg font-semibold text-slate-900">Create skill</h2>
         <div className="mt-4">
           <CreateSkillForm existingTitles={existingTitles} onCreate={handleCreateSkill} />
@@ -248,7 +315,7 @@ export function SkillTreePage() {
       <Panel className="relative min-h-0 overflow-hidden">
         <ReactFlow
           nodes={nodesForRender}
-          edges={edges}
+          edges={edgesForRender}
           nodeTypes={nodeTypes}
           defaultEdgeOptions={{
             type: 'smoothstep',
