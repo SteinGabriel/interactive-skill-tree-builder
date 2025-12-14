@@ -86,12 +86,8 @@ export function SkillTreePage() {
   const [createSkillModalOpen, setCreateSkillModalOpen] = React.useState(false)
   const [editingNodeId, setEditingNodeId] = React.useState(null)
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(
-    () => initialState.nodes,
-  )
-  const [edges, setEdges, onEdgesChange] = useEdgesState(
-    () => initialState.edges,
-  )
+  const [nodes, setNodes, onNodesChange] = useNodesState(() => initialState.nodes)
+  const [edges, setEdges, onEdgesChange] = useEdgesState(() => initialState.edges)
 
   const normalizedSearchQuery = searchQuery.trim().toLowerCase()
 
@@ -268,9 +264,7 @@ export function SkillTreePage() {
   }, [edges, nodes])
 
   const existingTitles = React.useMemo(() => {
-    return nodes
-      .map((node) => node?.data?.title)
-      .filter((title) => typeof title === 'string')
+    return nodes.map((node) => node?.data?.title).filter((title) => typeof title === 'string')
   }, [nodes])
 
   const editingNode = React.useMemo(() => {
@@ -382,9 +376,7 @@ export function SkillTreePage() {
   )
 
   const handleResetTree = React.useCallback(() => {
-    const confirmed = window.confirm(
-      'Reset skill tree? This clears all skills and prerequisites.',
-    )
+    const confirmed = window.confirm('Reset skill tree? This clears all skills and prerequisites.')
     if (!confirmed) return
 
     try {
@@ -441,9 +433,6 @@ export function SkillTreePage() {
           >
             New Skill
           </Button>
-          <Button size="sm" variant="secondary" onClick={handleResetTree}>
-            Reset
-          </Button>
           <div className="h-5 w-px bg-slate-200" aria-hidden />
           <IconButton
             aria-label="Zoom out"
@@ -492,6 +481,10 @@ export function SkillTreePage() {
           ) : normalizedSearchQuery ? (
             <div className="px-1 text-sm text-slate-600">No matches</div>
           ) : null}
+          <div className="h-5 w-px bg-slate-200" aria-hidden />
+          <Button size="sm" variant="secondary" onClick={handleResetTree}>
+            Reset Skill Tree
+          </Button>
         </div>
       </Panel>
 
