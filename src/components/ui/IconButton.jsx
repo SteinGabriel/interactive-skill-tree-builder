@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 
 const BASE_CLASSES =
   'inline-flex items-center justify-center rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ring-offset-white'
@@ -23,7 +24,8 @@ function joinClassNames(...values) {
 /**
  * Accessible icon-only button.
  *
- * Note: pass `aria-label` when the contents are non-textual.
+ * Note: pass `aria-label` when the contents are non-textual (or provide
+ * `aria-labelledby`).
  *
  * @param {{
  *   variant?: 'ghost' | 'secondary' | 'danger',
@@ -47,3 +49,29 @@ export const IconButton = React.forwardRef(function IconButton(
   )
 })
 
+function requireAccessibleName(props) {
+  const hasAriaLabel =
+    typeof props['aria-label'] === 'string' && props['aria-label'].trim() !== ''
+  const hasAriaLabelledBy =
+    typeof props['aria-labelledby'] === 'string' &&
+    props['aria-labelledby'].trim() !== ''
+
+  if (hasAriaLabel || hasAriaLabelledBy) return null
+
+  return new Error(
+    'IconButton requires an accessible name via `aria-label` or `aria-labelledby`.',
+  )
+}
+
+IconButton.propTypes = {
+  'aria-label': requireAccessibleName,
+  'aria-labelledby': PropTypes.string,
+  children: PropTypes.node,
+  className: PropTypes.string,
+  disabled: PropTypes.bool,
+  onClick: PropTypes.func,
+  size: PropTypes.oneOf(['sm', 'md', 'lg']),
+  title: PropTypes.string,
+  type: PropTypes.oneOf(['button', 'submit', 'reset']),
+  variant: PropTypes.oneOf(['ghost', 'secondary', 'danger']),
+}
