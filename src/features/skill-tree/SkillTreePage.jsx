@@ -6,6 +6,7 @@ import { Panel } from '@/components/ui/Panel'
 import { useToast } from '@/hooks/useToast'
 import { createId } from '@/lib/utils'
 import { CreateSkillForm } from '@/features/skill-tree/CreateSkillForm'
+import { SkillNode } from '@/features/skill-tree/SkillNode'
 
 /**
  * @typedef {import('@/lib/types').SkillStatus} SkillStatus
@@ -17,10 +18,13 @@ import { CreateSkillForm } from '@/features/skill-tree/CreateSkillForm'
 export function SkillTreePage() {
   const { pushToast } = useToast()
 
+  const nodeTypes = React.useMemo(() => ({ skill: SkillNode }), [])
+
   const [nodes, setNodes, onNodesChange] = useNodesState(() => [
     {
       id: 'root',
       position: { x: 0, y: 0 },
+      type: 'skill',
       data: {
         title: 'Root Skill',
         label: 'Root Skill',
@@ -60,6 +64,7 @@ export function SkillTreePage() {
         {
           id: createId(),
           position: nextPosition,
+          type: 'skill',
           data: {
             title,
             label: title,
@@ -88,6 +93,7 @@ export function SkillTreePage() {
         <ReactFlow
           nodes={nodes}
           edges={edges}
+          nodeTypes={nodeTypes}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           fitView
