@@ -10,6 +10,7 @@ import ReactFlow, {
 import 'reactflow/dist/style.css'
 
 import { Panel } from '@/components/ui/Panel'
+import { IconButton } from '@/components/ui/IconButton'
 import { TextInput } from '@/components/ui/TextInput'
 import { useToast } from '@/hooks/useToast'
 import { createId } from '@/lib/utils'
@@ -71,6 +72,7 @@ export function SkillTreePage() {
 
   const [initialState] = React.useState(() => getInitialState())
   const [searchQuery, setSearchQuery] = React.useState('')
+  const [reactFlowInstance, setReactFlowInstance] = React.useState(null)
 
   const [nodes, setNodes, onNodesChange] = useNodesState(
     () => initialState.nodes,
@@ -146,6 +148,18 @@ export function SkillTreePage() {
   }, [nodes, normalizedSearchQuery, simplifiedEdges])
 
   const searchHasMatches = normalizedSearchQuery && searchHighlight.matchNodeIds.size > 0
+
+  const handleFitView = React.useCallback(() => {
+    reactFlowInstance?.fitView?.({ padding: 0.25 })
+  }, [reactFlowInstance])
+
+  const handleZoomIn = React.useCallback(() => {
+    reactFlowInstance?.zoomIn?.()
+  }, [reactFlowInstance])
+
+  const handleZoomOut = React.useCallback(() => {
+    reactFlowInstance?.zoomOut?.()
+  }, [reactFlowInstance])
 
   const nodesForRender = React.useMemo(() => {
     return nodes.map((node) => ({
@@ -299,6 +313,7 @@ export function SkillTreePage() {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onInit={setReactFlowInstance}
           fitView
           className="h-full w-full"
         >
@@ -306,6 +321,40 @@ export function SkillTreePage() {
           <Controls />
         </ReactFlow>
       </div>
+
+      <Panel className="absolute left-1/2 top-4 z-10 -translate-x-1/2 px-2 py-2 shadow-md">
+        <div className="flex items-center gap-2">
+          <div className="px-1 text-sm font-semibold text-slate-900">Skill Tree</div>
+          <div className="h-5 w-px bg-slate-200" aria-hidden />
+          <IconButton
+            aria-label="Zoom out"
+            title="Zoom out"
+            size="sm"
+            variant="secondary"
+            onClick={handleZoomOut}
+          >
+            −
+          </IconButton>
+          <IconButton
+            aria-label="Zoom in"
+            title="Zoom in"
+            size="sm"
+            variant="secondary"
+            onClick={handleZoomIn}
+          >
+            +
+          </IconButton>
+          <IconButton
+            aria-label="Fit view"
+            title="Fit view"
+            size="sm"
+            variant="secondary"
+            onClick={handleFitView}
+          >
+            Fit
+          </IconButton>
+        </div>
+      </Panel>
 
       <Panel className="absolute left-4 top-4 z-10 w-[360px] max-h-[calc(100dvh-2rem)] overflow-auto p-4 shadow-md">
         <h2 className="text-lg font-semibold text-slate-900">Search</h2>
