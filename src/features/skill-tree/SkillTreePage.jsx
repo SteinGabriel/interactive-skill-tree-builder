@@ -431,25 +431,6 @@ export function SkillTreePage() {
         <div className="flex flex-wrap items-center gap-2">
           <div className="px-1 text-sm font-semibold text-slate-900">Skill Tree</div>
           <div className="h-5 w-px bg-slate-200" aria-hidden />
-          <div className="w-full sm:w-56">
-            <TextInput
-              aria-label="Search skills"
-              type="search"
-              autoComplete="off"
-              placeholder="Search…"
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              className="h-8 px-2 py-1"
-            />
-          </div>
-          {searchHasMatches ? (
-            <div className="px-1 text-sm text-slate-600">
-              Matches {searchHighlight.matchNodeIds.size} • Highlighting{' '}
-              {searchHighlight.highlightedNodeIds.size}
-            </div>
-          ) : normalizedSearchQuery ? (
-            <div className="px-1 text-sm text-slate-600">No matches</div>
-          ) : null}
           <Button
             size="sm"
             variant="primary"
@@ -491,6 +472,26 @@ export function SkillTreePage() {
           >
             Fit
           </IconButton>
+          <div className="h-5 w-px bg-slate-200" aria-hidden />
+          <div className="w-full sm:w-56">
+            <TextInput
+              aria-label="Search skills"
+              type="search"
+              autoComplete="off"
+              placeholder="Search…"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              className="h-8 px-2 py-1"
+            />
+          </div>
+          {searchHasMatches ? (
+            <div className="px-1 text-sm text-slate-600">
+              Matches {searchHighlight.matchNodeIds.size} • Highlighting{' '}
+              {searchHighlight.highlightedNodeIds.size}
+            </div>
+          ) : normalizedSearchQuery ? (
+            <div className="px-1 text-sm text-slate-600">No matches</div>
+          ) : null}
         </div>
       </Panel>
 
