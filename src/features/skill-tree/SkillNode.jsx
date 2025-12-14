@@ -12,28 +12,55 @@ import { joinClassNames } from '@/lib/utils'
 /**
  * @param {SkillStatus} status
  */
-function getStatusConfig(status) {
+function getStatusLabel(status) {
   if (status === 'completed') {
-    return {
-      label: 'Completed',
-      badgeClass: 'border-emerald-200 bg-emerald-50 text-emerald-900',
-    }
+    return 'Completed'
   }
   if (status === 'unlocked') {
-    return {
-      label: 'Unlocked',
-      badgeClass: 'border-sky-200 bg-sky-50 text-sky-900',
-    }
+    return 'Active'
   }
   if (status === 'unlockable') {
+    return 'Available'
+  }
+  return 'Locked'
+}
+
+/**
+ * @param {SkillStatus} status
+ */
+function getStatusVisualConfig(status) {
+  if (status === 'unlockable') {
     return {
-      label: 'Unlockable',
-      badgeClass: 'border-amber-200 bg-amber-50 text-amber-900',
+      containerClass: 'bg-white border-sky-400',
+      railClass: 'bg-sky-200',
+      pillClass: 'bg-sky-50 text-sky-900',
+      dotClass: 'bg-sky-500',
     }
   }
+
+  if (status === 'unlocked') {
+    return {
+      containerClass: 'bg-white border-violet-300',
+      railClass: 'bg-violet-200',
+      pillClass: 'bg-violet-50 text-violet-800',
+      dotClass: 'bg-violet-500',
+    }
+  }
+
+  if (status === 'completed') {
+    return {
+      containerClass: 'bg-white border-emerald-400',
+      railClass: 'bg-emerald-200',
+      pillClass: 'bg-emerald-50 text-emerald-900',
+      dotClass: 'bg-emerald-500',
+    }
+  }
+
   return {
-    label: 'Locked',
-    badgeClass: 'border-slate-200 bg-slate-50 text-slate-700',
+    containerClass: 'bg-slate-50 border-slate-300',
+    railClass: 'bg-slate-400',
+    pillClass: 'bg-slate-100 text-slate-700',
+    dotClass: 'bg-slate-500',
   }
 }
 
@@ -53,7 +80,8 @@ function getStatusConfig(status) {
 export function SkillNode({ data, selected }) {
   const title = typeof data?.title === 'string' && data.title.trim() ? data.title : 'Untitled'
   const status = data?.status ?? 'locked'
-  const statusConfig = getStatusConfig(status)
+  const statusLabel = getStatusLabel(status)
+  const statusVisual = getStatusVisualConfig(status)
   const searchMatch = data?.search?.match === true
   const searchHighlighted = data?.search?.highlighted === true
   const searchDimmed = data?.search?.dimmed === true
@@ -65,38 +93,42 @@ export function SkillNode({ data, selected }) {
   return (
     <div
       className={joinClassNames(
-        'w-56 rounded-lg border bg-white px-3 py-2 shadow-sm',
+        'relative min-w-56 w-max overflow-hidden rounded-lg border px-3 py-2 shadow-sm',
+        statusVisual.containerClass,
         searchDimmed ? 'opacity-30' : null,
-        selected
-          ? 'border-sky-400 ring-2 ring-sky-200'
-          : searchMatch
-            ? 'border-fuchsia-400 ring-2 ring-fuchsia-200'
-            : searchHighlighted
-              ? 'border-sky-300 ring-1 ring-sky-100 shadow-md'
-              : 'border-slate-200',
+        selected ? 'ring-2 ring-sky-200' : null,
+        !selected && searchMatch ? 'ring-2 ring-fuchsia-200 shadow-md' : null,
+        !selected && !searchMatch && searchHighlighted ? 'ring-1 ring-sky-100 shadow-md' : null,
       )}
     >
+      <div
+        className={joinClassNames('absolute left-0 top-0 h-full w-1.5', statusVisual.railClass)}
+      />
       <Handle
         type="target"
         position={Position.Top}
         className="!h-3 !w-3 !border-2 !border-white !bg-slate-400"
       />
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="truncate text-sm font-semibold text-slate-900">{title}</div>
+      <div className="w-full flex flex-row items-start justify-start gap-2">
+        <div className="min-w-0 w-full">
+          <div className="w-full flex flex-row items-center justify-between gap-2">
+            <div className="truncate text-sm font-semibold text-slate-900">{title}</div>
+            <div
+              className={joinClassNames(
+                'rounded-full px-2 py-0.5 inline-flex items-center gap-1.5',
+                statusVisual.pillClass,
+              )}
+            >
+              <span className={joinClassNames('h-2 w-2 rounded-full', statusVisual.dotClass)} />
+              <span className={joinClassNames('text-xs font-medium', statusVisual.pillClass)}>
+                {statusLabel}
+              </span>
+            </div>
+          </div>
           {metaParts.length ? (
             <div className="mt-0.5 text-xs text-slate-600">{metaParts.join(' • ')}</div>
           ) : null}
         </div>
-        <span
-          className={joinClassNames(
-            'shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium',
-            statusConfig.badgeClass,
-          )}
-          aria-label={`Status: ${statusConfig.label}`}
-        >
-          {statusConfig.label}
-        </span>
       </div>
       {status === 'unlockable' ? (
         <div className="nodrag mt-2 flex items-center justify-end gap-2">
