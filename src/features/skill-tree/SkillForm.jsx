@@ -96,7 +96,6 @@ export function SkillForm({
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="e.g. OAuth Basics"
-        hint="Titles must be unique (case-insensitive)."
         error={titleError}
         required
         autoFocus
