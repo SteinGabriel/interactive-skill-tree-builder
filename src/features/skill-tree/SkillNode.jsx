@@ -115,9 +115,9 @@ export function SkillNode({ data, selected }) {
         className="!h-3 !w-3 !border-2 !border-white !bg-slate-400"
       />
       <div className="w-full flex flex-row items-start justify-start gap-2">
-        <div className="min-w-0 w-full">
+        <div className="min-w-0 w-full mb-4 pt-1">
           <div className="w-full flex flex-row items-center justify-between gap-2">
-            <div className="truncate text-sm font-semibold text-slate-900">{title}</div>
+            <div className="truncate text-lg font-semibold text-slate-600">{title}</div>
             <div className="mr-6">
               <IconButton
                 aria-label="Edit skill"
