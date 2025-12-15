@@ -73,6 +73,7 @@ function getStatusVisualConfig(status) {
  *   data: {
  *     title?: string,
  *     status?: SkillStatus,
+ *     description?: string,
  *     cost?: number,
  *     level?: number,
  *     onEdit?: () => void,
@@ -83,6 +84,8 @@ function getStatusVisualConfig(status) {
  */
 export function SkillNode({ data, selected }) {
   const title = typeof data?.title === 'string' && data.title.trim() ? data.title : 'Untitled'
+  const description =
+    typeof data?.description === 'string' && data.description.trim() ? data.description.trim() : ''
   const status = data?.status ?? 'locked'
   const statusLabel = getStatusLabel(status)
   const statusVisual = getStatusVisualConfig(status)
@@ -117,7 +120,9 @@ export function SkillNode({ data, selected }) {
       <div className="w-full flex flex-row items-start justify-start gap-2">
         <div className="min-w-0 w-full mb-4 pt-1">
           <div className="w-full flex flex-row items-center justify-between gap-2">
-            <div className="truncate text-lg font-semibold text-slate-600">{title}</div>
+            <div className="max-w-[250px] truncate text-lg font-semibold text-slate-600">
+              {title}
+            </div>
             <div className="mr-6">
               <IconButton
                 aria-label="Edit skill"
@@ -150,6 +155,9 @@ export function SkillNode({ data, selected }) {
           ) : null}
         </div>
       </div>
+      {description ? (
+        <div className="mt-1 w-full max-w-[400px] text-sm text-slate-600">{description}</div>
+      ) : null}
       {status === 'unlockable' ? (
         <div className="nodrag mt-4 flex items-center justify-end gap-1.5">
           <Button
@@ -188,6 +196,7 @@ export function SkillNode({ data, selected }) {
 SkillNode.propTypes = {
   data: PropTypes.shape({
     cost: PropTypes.number,
+    description: PropTypes.string,
     level: PropTypes.number,
     onComplete: PropTypes.func,
     onEdit: PropTypes.func,
