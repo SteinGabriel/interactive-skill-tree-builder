@@ -1,5 +1,6 @@
 import {
   createEmptyPersistedTreeState,
+  DEFAULT_SKILL_POINTS_TOTAL,
   deserialize,
   loadFromLocalStorage,
   saveToLocalStorage,
@@ -9,6 +10,7 @@ import {
 describe('persistence helpers', () => {
   test('round-trips serialize/deserialize and strips derived unlockable', () => {
     const state = {
+      skillPointsTotal: 25,
       nodes: [
         {
           id: 'A',
@@ -25,6 +27,7 @@ describe('persistence helpers', () => {
     }
 
     const roundTripped = deserialize(serialize(state))
+    expect(roundTripped.skillPointsTotal).toBe(25)
     expect(roundTripped.nodes).toHaveLength(2)
     expect(roundTripped.nodes[0].data.status).toBe('locked')
     expect(roundTripped.nodes[1].data.status).toBe('completed')
@@ -35,6 +38,11 @@ describe('persistence helpers', () => {
     expect(() => deserialize('{not json')).toThrow('Invalid JSON')
   })
 
+  test('deserialize defaults skillPointsTotal when missing', () => {
+    const state = deserialize(JSON.stringify({ nodes: [], edges: [] }))
+    expect(state.skillPointsTotal).toBe(DEFAULT_SKILL_POINTS_TOTAL)
+  })
+
   test('loadFromLocalStorage returns empty state when missing', () => {
     window.localStorage.removeItem('test-key')
     expect(loadFromLocalStorage('test-key')).toEqual(createEmptyPersistedTreeState())
@@ -42,6 +50,7 @@ describe('persistence helpers', () => {
 
   test('deserialize tolerates partial/invalid data by dropping bad entries', () => {
     const serialized = JSON.stringify({
+      skillPointsTotal: -5,
       nodes: [
         { id: 'A', position: { x: 0, y: 0 }, data: { title: 'A', status: 'unlocked' } },
         { id: '', position: { x: 0, y: 0 }, data: { title: 'bad', status: 'locked' } },
@@ -56,6 +65,7 @@ describe('persistence helpers', () => {
     })
 
     const state = deserialize(serialized)
+    expect(state.skillPointsTotal).toBe(DEFAULT_SKILL_POINTS_TOTAL)
     expect(state.nodes.map((n) => n.id)).toEqual(['A', 'B', 'C'])
     expect(state.nodes.find((n) => n.id === 'B').position).toEqual({ x: 0, y: 0 })
     expect(state.nodes.find((n) => n.id === 'B').data.status).toBe('locked')

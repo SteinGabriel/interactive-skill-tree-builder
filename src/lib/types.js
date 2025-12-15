@@ -41,6 +41,7 @@
 
 /**
  * @typedef {Object} PersistedTreeState
+ * @property {number} skillPointsTotal
  * @property {PersistedNode[]} nodes
  * @property {PersistedEdge[]} edges
  */

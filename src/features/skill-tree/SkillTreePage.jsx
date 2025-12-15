@@ -18,6 +18,7 @@ import { useToast } from '@/hooks/useToast'
 import { createId } from '@/lib/utils'
 import { getSearchHighlightSets, validateEdgeCreation } from '@/lib/helpers/graph'
 import {
+  DEFAULT_SKILL_POINTS_TOTAL,
   loadFromLocalStorage,
   saveToLocalStorage,
   SKILL_TREE_STORAGE_KEY,
@@ -30,8 +31,6 @@ import { getSkillPointsRequiredForNodeData, getSkillPointsSpent } from '@/lib/he
 /**
  * @typedef {import('@/lib/types').SkillStatus} SkillStatus
  */
-
-const SKILL_POINTS_TOTAL = 20
 
 function createDefaultCanvasState() {
   return {
@@ -53,13 +52,18 @@ function createDefaultCanvasState() {
 
 function getInitialState() {
   const persisted = loadFromLocalStorage()
-  const hasPersistedState = persisted.nodes.length > 0 || persisted.edges.length > 0
+  const skillPointsTotal =
+    typeof persisted.skillPointsTotal === 'number'
+      ? persisted.skillPointsTotal
+      : DEFAULT_SKILL_POINTS_TOTAL
 
-  if (!hasPersistedState) {
-    return createDefaultCanvasState()
+  const hasPersistedGraph = persisted.nodes.length > 0 || persisted.edges.length > 0
+  if (!hasPersistedGraph) {
+    return { ...createDefaultCanvasState(), skillPointsTotal }
   }
 
   return {
+    skillPointsTotal,
     nodes: persisted.nodes.map((node) => ({
       ...node,
       type: 'skill',
@@ -84,10 +88,16 @@ export function SkillTreePage() {
   const nodeTypes = React.useMemo(() => ({ skill: SkillNode }), [])
 
   const [initialState] = React.useState(() => getInitialState())
+  const totalPointsInputId = React.useId()
   const [searchQuery, setSearchQuery] = React.useState('')
   const [reactFlowInstance, setReactFlowInstance] = React.useState(null)
   const [createSkillModalOpen, setCreateSkillModalOpen] = React.useState(false)
   const [editingNodeId, setEditingNodeId] = React.useState(null)
+  const [skillPointsTotal, setSkillPointsTotal] = React.useState(() => {
+    return typeof initialState.skillPointsTotal === 'number'
+      ? initialState.skillPointsTotal
+      : DEFAULT_SKILL_POINTS_TOTAL
+  })
 
   const [nodes, setNodes, onNodesChange] = useNodesState(() => initialState.nodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(() => initialState.edges)
@@ -113,12 +123,12 @@ export function SkillTreePage() {
 
       const requiredPoints = getSkillPointsRequiredForNodeData(targetNode.data)
       const pointsSpent = getSkillPointsSpent(nodes)
-      const pointsAvailable = SKILL_POINTS_TOTAL - pointsSpent
+      const pointsAvailable = skillPointsTotal - pointsSpent
 
       if (requiredPoints > pointsAvailable) {
         pushToast({
           variant: 'error',
-          message: 'Not enough skill points.',
+          message: `Not enough skill points. Need ${requiredPoints}, but only ${pointsAvailable} available.`,
         })
         return
       }
@@ -136,7 +146,7 @@ export function SkillTreePage() {
         }),
       )
     },
-    [nodes, pushToast, setNodes],
+    [nodes, pushToast, setNodes, skillPointsTotal],
   )
 
   const handleCompleteSkill = React.useCallback(
@@ -282,8 +292,8 @@ export function SkillTreePage() {
   }, [nodes, setNodes, simplifiedEdges])
 
   React.useEffect(() => {
-    saveToLocalStorage({ nodes, edges })
-  }, [edges, nodes])
+    saveToLocalStorage({ nodes, edges, skillPointsTotal })
+  }, [edges, nodes, skillPointsTotal])
 
   const existingTitles = React.useMemo(() => {
     return nodes.map((node) => node?.data?.title).filter((title) => typeof title === 'string')
@@ -413,6 +423,7 @@ export function SkillTreePage() {
     setCreateSkillModalOpen(false)
     setEditingNodeId(null)
     setSearchQuery('')
+    setSkillPointsTotal(DEFAULT_SKILL_POINTS_TOTAL)
     pushToast({ variant: 'success', message: 'Skill tree reset.' })
     reactFlowInstance?.fitView?.({ padding: 0.25 })
   }, [pushToast, reactFlowInstance, setEdges, setNodes])
@@ -444,15 +455,6 @@ export function SkillTreePage() {
       <Panel className="absolute left-1/2 top-4 z-10 -translate-x-1/2 px-2 py-2 shadow-md w-max">
         <div className="flex flex-wrap items-center gap-2">
           <div className="px-1 text-sm font-semibold text-slate-900">Skill Tree</div>
-          <div
-            className="rounded-md bg-slate-100 px-2 py-1 text-sm text-slate-700"
-            aria-label={`Skill points spent ${formattedSkillPointsSpent} of ${SKILL_POINTS_TOTAL}`}
-          >
-            <span className="font-medium text-slate-900">
-              {formattedSkillPointsSpent}/{SKILL_POINTS_TOTAL}
-            </span>{' '}
-            points
-          </div>
           <div className="h-5 w-px bg-slate-200" aria-hidden />
           <Button
             size="sm"
@@ -513,6 +515,35 @@ export function SkillTreePage() {
             <div className="px-1 text-sm text-slate-600">No matches</div>
           ) : null}
           <div className="h-5 w-px bg-slate-200" aria-hidden />
+          <div
+            className="flex items-center rounded-md bg-slate-100 px-2 py-1 text-sm text-slate-700"
+            aria-label={`Skill points spent ${formattedSkillPointsSpent} of ${skillPointsTotal}`}
+          >
+            <span className="font-medium text-slate-900">{formattedSkillPointsSpent}</span>
+            <span className="mx-1 text-slate-500" aria-hidden="true">
+              /
+            </span>
+            <label htmlFor={totalPointsInputId} className="sr-only">
+              Total skill points
+            </label>
+            <input
+              id={totalPointsInputId}
+              aria-label="Total skill points"
+              type="number"
+              inputMode="numeric"
+              min="0"
+              step="1"
+              value={skillPointsTotal}
+              onChange={(event) => {
+                const raw = event.target.value
+                const next = raw === '' ? 0 : Number(raw)
+                if (!Number.isFinite(next)) return
+                setSkillPointsTotal(Math.max(0, Math.floor(next)))
+              }}
+              className="h-6 w-14 rounded-md border border-slate-200 bg-white px-1 text-right text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 ring-offset-white"
+            />
+            <span className="ml-1 text-slate-600">points</span>
+          </div>
           <Button size="sm" variant="secondary" onClick={handleResetTree}>
             Reset Skill Tree
           </Button>
