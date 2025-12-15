@@ -25,10 +25,13 @@ import {
 import { SkillForm } from '@/features/skill-tree/SkillForm'
 import { SkillNode } from '@/features/skill-tree/SkillNode'
 import { deriveNodeStatuses } from '@/lib/helpers/graph'
+import { getSkillPointsRequiredForNodeData, getSkillPointsSpent } from '@/lib/helpers/skillPoints'
 
 /**
  * @typedef {import('@/lib/types').SkillStatus} SkillStatus
  */
+
+const SKILL_POINTS_TOTAL = 20
 
 function createDefaultCanvasState() {
   return {
@@ -91,6 +94,13 @@ export function SkillTreePage() {
 
   const normalizedSearchQuery = searchQuery.trim().toLowerCase()
 
+  const skillPointsSpent = React.useMemo(() => getSkillPointsSpent(nodes), [nodes])
+  const formattedSkillPointsSpent = React.useMemo(() => {
+    return Number.isInteger(skillPointsSpent)
+      ? String(skillPointsSpent)
+      : skillPointsSpent.toFixed(1)
+  }, [skillPointsSpent])
+
   const handleUnlockSkill = React.useCallback(
     (nodeId) => {
       const targetNode = nodes.find((node) => node.id === nodeId)
@@ -98,6 +108,18 @@ export function SkillTreePage() {
 
       if (targetNode.data.status !== 'unlockable') {
         pushToast({ variant: 'error', message: 'That skill is not unlockable yet.' })
+        return
+      }
+
+      const requiredPoints = getSkillPointsRequiredForNodeData(targetNode.data)
+      const pointsSpent = getSkillPointsSpent(nodes)
+      const pointsAvailable = SKILL_POINTS_TOTAL - pointsSpent
+
+      if (requiredPoints > pointsAvailable) {
+        pushToast({
+          variant: 'error',
+          message: 'Not enough skill points.',
+        })
         return
       }
 
@@ -419,9 +441,18 @@ export function SkillTreePage() {
         </ReactFlow>
       </div>
 
-      <Panel className="absolute left-1/2 top-4 z-10 -translate-x-1/2 px-2 py-2 shadow-md">
+      <Panel className="absolute left-1/2 top-4 z-10 -translate-x-1/2 px-2 py-2 shadow-md w-max">
         <div className="flex flex-wrap items-center gap-2">
           <div className="px-1 text-sm font-semibold text-slate-900">Skill Tree</div>
+          <div
+            className="rounded-md bg-slate-100 px-2 py-1 text-sm text-slate-700"
+            aria-label={`Skill points spent ${formattedSkillPointsSpent} of ${SKILL_POINTS_TOTAL}`}
+          >
+            <span className="font-medium text-slate-900">
+              {formattedSkillPointsSpent}/{SKILL_POINTS_TOTAL}
+            </span>{' '}
+            points
+          </div>
           <div className="h-5 w-px bg-slate-200" aria-hidden />
           <Button
             size="sm"
@@ -431,7 +462,7 @@ export function SkillTreePage() {
               setCreateSkillModalOpen(true)
             }}
           >
-            New Skill
+            Add Skill
           </Button>
           <div className="h-5 w-px bg-slate-200" aria-hidden />
           <IconButton
