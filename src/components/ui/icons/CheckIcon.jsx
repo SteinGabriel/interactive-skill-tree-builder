@@ -1,5 +1,4 @@
 import React from 'react'
-import PropTypes from 'prop-types'
 
 /**
  * @param {React.ComponentPropsWithoutRef<'svg'>} props
@@ -21,8 +20,3 @@ export function CheckIcon({ className, ...props }) {
     </svg>
   )
 }
-
-CheckIcon.propTypes = {
-  className: PropTypes.string,
-}
-

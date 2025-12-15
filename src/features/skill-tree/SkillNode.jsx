@@ -1,5 +1,4 @@
 import React from 'react'
-import PropTypes from 'prop-types'
 import { Handle, Position } from 'reactflow'
 
 import { Button } from '@/components/ui/Button'
@@ -191,23 +190,4 @@ export function SkillNode({ data, selected }) {
       />
     </div>
   )
-}
-
-SkillNode.propTypes = {
-  data: PropTypes.shape({
-    cost: PropTypes.number,
-    description: PropTypes.string,
-    level: PropTypes.number,
-    onComplete: PropTypes.func,
-    onEdit: PropTypes.func,
-    onUnlock: PropTypes.func,
-    search: PropTypes.shape({
-      dimmed: PropTypes.bool,
-      highlighted: PropTypes.bool,
-      match: PropTypes.bool,
-    }),
-    status: PropTypes.oneOf(['locked', 'unlockable', 'unlocked', 'completed']),
-    title: PropTypes.string,
-  }),
-  selected: PropTypes.bool,
 }

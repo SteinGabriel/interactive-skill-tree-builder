@@ -1,5 +1,4 @@
 import React from 'react'
-import PropTypes from 'prop-types'
 
 /**
  * @param {React.ComponentPropsWithoutRef<'svg'>} props
@@ -22,8 +21,3 @@ export function OpenLockIcon({ className, ...props }) {
     </svg>
   )
 }
-
-OpenLockIcon.propTypes = {
-  className: PropTypes.string,
-}
-

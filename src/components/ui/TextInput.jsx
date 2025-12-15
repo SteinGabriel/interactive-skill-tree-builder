@@ -1,5 +1,4 @@
 import React from 'react'
-import PropTypes from 'prop-types'
 import { joinClassNames } from '@/lib/utils'
 
 const LABEL_CLASSES = 'text-sm font-medium text-slate-900'
@@ -57,11 +56,3 @@ export const TextInput = React.forwardRef(function TextInput(
     </div>
   )
 })
-
-TextInput.propTypes = {
-  className: PropTypes.string,
-  error: PropTypes.string,
-  hint: PropTypes.string,
-  id: PropTypes.string,
-  label: PropTypes.string,
-}

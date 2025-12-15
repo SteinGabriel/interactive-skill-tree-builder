@@ -1,5 +1,4 @@
 import React from 'react'
-import PropTypes from 'prop-types'
 import { joinClassNames } from '@/lib/utils'
 
 const BASE_CLASSES =
@@ -33,6 +32,19 @@ export const IconButton = React.forwardRef(function IconButton(
   { variant = 'ghost', size = 'md', className, type = 'button', ...props },
   ref,
 ) {
+  const hasAriaLabel =
+    typeof props['aria-label'] === 'string' && props['aria-label'].trim() !== ''
+  const hasAriaLabelledBy =
+    typeof props['aria-labelledby'] === 'string' &&
+    props['aria-labelledby'].trim() !== ''
+
+  const isDev = Boolean(import.meta?.env?.DEV)
+  if (isDev && !hasAriaLabel && !hasAriaLabelledBy) {
+    console.warn(
+      'IconButton requires an accessible name via `aria-label` or `aria-labelledby`.',
+    )
+  }
+
   const variantClass = VARIANT_CLASSES[variant] ?? VARIANT_CLASSES.ghost
   const sizeClass = SIZE_CLASSES[size] ?? SIZE_CLASSES.md
 
@@ -45,30 +57,3 @@ export const IconButton = React.forwardRef(function IconButton(
     />
   )
 })
-
-function requireAccessibleName(props) {
-  const hasAriaLabel =
-    typeof props['aria-label'] === 'string' && props['aria-label'].trim() !== ''
-  const hasAriaLabelledBy =
-    typeof props['aria-labelledby'] === 'string' &&
-    props['aria-labelledby'].trim() !== ''
-
-  if (hasAriaLabel || hasAriaLabelledBy) return null
-
-  return new Error(
-    'IconButton requires an accessible name via `aria-label` or `aria-labelledby`.',
-  )
-}
-
-IconButton.propTypes = {
-  'aria-label': requireAccessibleName,
-  'aria-labelledby': PropTypes.string,
-  children: PropTypes.node,
-  className: PropTypes.string,
-  disabled: PropTypes.bool,
-  onClick: PropTypes.func,
-  size: PropTypes.oneOf(['sm', 'md', 'lg']),
-  title: PropTypes.string,
-  type: PropTypes.oneOf(['button', 'submit', 'reset']),
-  variant: PropTypes.oneOf(['ghost', 'secondary', 'danger']),
-}

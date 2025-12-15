@@ -1,5 +1,4 @@
 import React from 'react'
-import PropTypes from 'prop-types'
 
 import { Button } from '@/components/ui/Button'
 import { TextArea } from '@/components/ui/TextArea'
@@ -137,16 +136,4 @@ export function SkillForm({
       </div>
     </form>
   )
-}
-
-SkillForm.propTypes = {
-  existingTitles: PropTypes.arrayOf(PropTypes.string).isRequired,
-  initialValues: PropTypes.shape({
-    cost: PropTypes.number,
-    description: PropTypes.string,
-    level: PropTypes.number,
-    title: PropTypes.string,
-  }),
-  onSubmit: PropTypes.func.isRequired,
-  submitLabel: PropTypes.string,
 }
