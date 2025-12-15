@@ -90,6 +90,9 @@ export function SkillTreePage() {
   const [initialState] = React.useState(() => getInitialState())
   const totalPointsInputId = React.useId()
   const toolbarRef = React.useRef(null)
+  const connectSourceNodeIdRef = React.useRef(/** @type {string | null} */ (null))
+  const connectSourceHandleTypeRef = React.useRef(/** @type {'source' | 'target' | null} */ (null))
+  const [pendingNewNodeId, setPendingNewNodeId] = React.useState(/** @type {string | null} */ (null))
   const [searchQuery, setSearchQuery] = React.useState('')
   const [reactFlowInstance, setReactFlowInstance] = React.useState(null)
   const [createSkillModalOpen, setCreateSkillModalOpen] = React.useState(false)
@@ -391,6 +394,20 @@ export function SkillTreePage() {
     return nodes.map((node) => node?.data?.title).filter((title) => typeof title === 'string')
   }, [nodes])
 
+  const getNextNewSkillTitle = React.useCallback(() => {
+    const existing = new Set(existingTitles.map((title) => title.trim().toLowerCase()))
+    const base = 'New Skill'
+    const baseNormalized = base.toLowerCase()
+    if (!existing.has(baseNormalized)) return base
+
+    for (let suffix = 2; suffix < 10_000; suffix += 1) {
+      const candidate = `${base} ${suffix}`
+      if (!existing.has(candidate.toLowerCase())) return candidate
+    }
+
+    return `${base} ${createId().slice(0, 6)}`
+  }, [existingTitles])
+
   const editingNode = React.useMemo(() => {
     if (!editingNodeId) return null
     return nodes.find((node) => node.id === editingNodeId) ?? null
@@ -462,6 +479,7 @@ export function SkillTreePage() {
   const handleEditSkillFromModal = React.useCallback(
     ({ title, description, cost, level }) => {
       if (!editingNodeId) return false
+      const wasPendingNewSkill = pendingNewNodeId === editingNodeId
 
       const normalizedNewTitle = title.trim().toLowerCase()
       const existing = new Set(titlesExcludingEditingNode.map((t) => t.trim().toLowerCase()))
@@ -491,12 +509,19 @@ export function SkillTreePage() {
         }),
       )
 
+      if (wasPendingNewSkill) {
+        setPendingNewNodeId(null)
+      }
+
       setCreateSkillModalOpen(false)
       setEditingNodeId(null)
-      pushToast({ variant: 'success', message: `Updated skill “${title}”.` })
+      pushToast({
+        variant: 'success',
+        message: wasPendingNewSkill ? `Created skill “${title}”.` : `Updated skill “${title}”.`,
+      })
       return true
     },
-    [editingNodeId, pushToast, setNodes, titlesExcludingEditingNode],
+    [editingNodeId, pendingNewNodeId, pushToast, setNodes, titlesExcludingEditingNode],
   )
 
   const handleResetTree = React.useCallback(() => {
@@ -521,6 +546,96 @@ export function SkillTreePage() {
     reactFlowInstance?.fitView?.({ padding: 0.25 })
   }, [pushToast, reactFlowInstance, setEdges, setNodes])
 
+  const onConnectStart = React.useCallback((_, params) => {
+    connectSourceNodeIdRef.current = params?.nodeId ?? null
+    connectSourceHandleTypeRef.current = params?.handleType ?? null
+  }, [])
+
+  const onConnectEnd = React.useCallback(
+    (event) => {
+      const sourceNodeId = connectSourceNodeIdRef.current
+      const handleType = connectSourceHandleTypeRef.current
+      connectSourceNodeIdRef.current = null
+      connectSourceHandleTypeRef.current = null
+
+      if (!sourceNodeId) return
+      if (handleType !== 'source') return
+      if (!reactFlowInstance) return
+
+      const target = /** @type {HTMLElement | null} */ (event?.target ?? null)
+      if (target?.closest?.('.react-flow__handle')) return
+      if (target?.closest?.('.react-flow__node')) return
+
+      const droppedOnPane = Boolean(target?.closest?.('.react-flow__pane'))
+      if (!droppedOnPane) return
+
+      let clientX = 0
+      let clientY = 0
+
+      if ('changedTouches' in event && event.changedTouches?.length) {
+        clientX = event.changedTouches[0].clientX
+        clientY = event.changedTouches[0].clientY
+      } else if ('clientX' in event && 'clientY' in event) {
+        clientX = event.clientX
+        clientY = event.clientY
+      } else {
+        return
+      }
+
+      const screenToFlowPosition =
+        reactFlowInstance.screenToFlowPosition ?? reactFlowInstance.project
+      if (typeof screenToFlowPosition !== 'function') return
+
+      const position = screenToFlowPosition({ x: clientX, y: clientY })
+
+      const newNodeId = createId()
+      const newNodeTitle = getNextNewSkillTitle()
+
+      setPendingNewNodeId(newNodeId)
+
+      setNodes((current) => [
+        ...current,
+        {
+          id: newNodeId,
+          position,
+          type: 'skill',
+          data: {
+            title: newNodeTitle,
+            label: newNodeTitle,
+            description: '',
+            cost: 1,
+            level: 1,
+            status: /** @type {SkillStatus} */ ('locked'),
+          },
+        },
+      ])
+
+      setEdges((current) => {
+        const validation = validateEdgeCreation({
+          source: sourceNodeId,
+          target: newNodeId,
+          edges: current.map((edge) => ({ source: edge.source, target: edge.target })),
+        })
+
+        if (!validation.ok) return current
+
+        return addEdge(
+          {
+            id: createId(),
+            source: sourceNodeId,
+            target: newNodeId,
+            type: 'smoothstep',
+          },
+          current,
+        )
+      })
+
+      setEditingNodeId(newNodeId)
+      setCreateSkillModalOpen(true)
+    },
+    [getNextNewSkillTitle, reactFlowInstance, setEdges, setNodes, setPendingNewNodeId],
+  )
+
   return (
     <div className="relative h-dvh w-dvw overflow-hidden bg-slate-50">
       <div className="absolute inset-0">
@@ -536,6 +651,8 @@ export function SkillTreePage() {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onConnectStart={onConnectStart}
+          onConnectEnd={onConnectEnd}
           onInit={setReactFlowInstance}
           fitView
           className="h-full w-full"
@@ -656,8 +773,17 @@ export function SkillTreePage() {
 
       <Modal
         open={createSkillModalOpen}
-        title={editingNodeId ? 'Edit skill' : 'New skill'}
+        title={editingNodeId && pendingNewNodeId !== editingNodeId ? 'Edit skill' : 'New skill'}
         onClose={() => {
+          if (pendingNewNodeId && pendingNewNodeId === editingNodeId) {
+            setPendingNewNodeId(null)
+            setNodes((current) => current.filter((node) => node.id !== pendingNewNodeId))
+            setEdges((current) =>
+              current.filter(
+                (edge) => edge.source !== pendingNewNodeId && edge.target !== pendingNewNodeId,
+              ),
+            )
+          }
           setCreateSkillModalOpen(false)
           setEditingNodeId(null)
         }}
@@ -674,7 +800,9 @@ export function SkillTreePage() {
                 }
               : undefined
           }
-          submitLabel={editingNodeId ? 'Save changes' : 'Create skill'}
+          submitLabel={
+            editingNodeId && pendingNewNodeId !== editingNodeId ? 'Save changes' : 'Create skill'
+          }
           onSubmit={editingNodeId ? handleEditSkillFromModal : handleCreateSkillFromModal}
         />
       </Modal>
