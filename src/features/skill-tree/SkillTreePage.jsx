@@ -89,6 +89,7 @@ export function SkillTreePage() {
 
   const [initialState] = React.useState(() => getInitialState())
   const totalPointsInputId = React.useId()
+  const toolbarRef = React.useRef(null)
   const [searchQuery, setSearchQuery] = React.useState('')
   const [reactFlowInstance, setReactFlowInstance] = React.useState(null)
   const [createSkillModalOpen, setCreateSkillModalOpen] = React.useState(false)
@@ -117,6 +118,60 @@ export function SkillTreePage() {
       ? String(skillPointsSpent)
       : skillPointsSpent.toFixed(1)
   }, [skillPointsSpent])
+
+  React.useEffect(() => {
+    if (createSkillModalOpen) return
+
+    const handleKeyDown = (event) => {
+      if (event.defaultPrevented) return
+      if (event.key !== 'Tab' || event.shiftKey) return
+
+      const active = document.activeElement
+      const isPageLevelFocus =
+        !active || active === document.body || active === document.documentElement
+
+      const toolbar = toolbarRef.current
+      if (!toolbar) return
+
+      const candidates = Array.from(
+        toolbar.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        ),
+      )
+
+      const focusables = candidates.filter((element) => {
+        if (!(element instanceof HTMLElement)) return false
+        if (element.getAttribute('disabled') !== null) return false
+        if (element.getAttribute('aria-disabled') === 'true') return false
+        return element.tabIndex >= 0
+      })
+
+      if (focusables.length === 0) return
+
+      if (isPageLevelFocus) {
+        event.preventDefault()
+        focusables[0].focus()
+        return
+      }
+
+      const lastFocusable = focusables[focusables.length - 1]
+      if (active !== lastFocusable) return
+
+      const firstNodeId = nodes[0]?.id
+      if (typeof firstNodeId !== 'string' || firstNodeId.trim() === '') return
+
+      const firstNodeElement = /** @type {HTMLElement | null} */ (
+        document.querySelector(`[data-skill-node-id="${firstNodeId}"]`)
+      )
+      if (!firstNodeElement) return
+
+      event.preventDefault()
+      firstNodeElement.focus()
+    }
+
+    window.addEventListener('keydown', handleKeyDown, true)
+    return () => window.removeEventListener('keydown', handleKeyDown, true)
+  }, [createSkillModalOpen, nodes])
 
   React.useEffect(() => {
     setSkillPointsTotalDraft(String(skillPointsTotal))
@@ -490,7 +545,10 @@ export function SkillTreePage() {
         </ReactFlow>
       </div>
 
-      <Panel className="absolute left-4 right-4 top-4 z-10 mx-auto px-2 py-2 shadow-md w-fit max-w-full">
+      <Panel
+        ref={toolbarRef}
+        className="absolute left-4 right-4 top-4 z-10 mx-auto px-2 py-2 shadow-md w-fit max-w-full"
+      >
         <div className="flex flex-wrap items-center gap-2">
           <div className="px-1 text-sm font-semibold text-slate-900">Skill Tree</div>
           <div
