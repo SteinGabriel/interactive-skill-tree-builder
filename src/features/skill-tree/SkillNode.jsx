@@ -3,6 +3,10 @@ import PropTypes from 'prop-types'
 import { Handle, Position } from 'reactflow'
 
 import { Button } from '@/components/ui/Button'
+import { IconButton } from '@/components/ui/IconButton'
+import { CheckIcon } from '@/components/ui/icons/CheckIcon'
+import { EditIcon } from '@/components/ui/icons/EditIcon'
+import { OpenLockIcon } from '@/components/ui/icons/OpenLockIcon'
 import { joinClassNames } from '@/lib/utils'
 
 /**
@@ -49,8 +53,8 @@ function getStatusVisualConfig(status) {
 
   if (status === 'completed') {
     return {
-      containerClass: 'bg-white border-emerald-400',
-      railClass: 'bg-emerald-200',
+      containerClass: 'bg-white border-emerald-200',
+      railClass: 'bg-emerald-100',
       pillClass: 'bg-emerald-50 text-emerald-900',
       dotClass: 'bg-emerald-500',
     }
@@ -85,6 +89,7 @@ export function SkillNode({ data, selected }) {
   const searchMatch = data?.search?.match === true
   const searchHighlighted = data?.search?.highlighted === true
   const searchDimmed = data?.search?.dimmed === true
+  const actionButtonClass = 'h-7 px-2 text-xs'
 
   const metaParts = []
   if (typeof data?.cost === 'number') metaParts.push(`Cost: ${data.cost}`)
@@ -113,16 +118,31 @@ export function SkillNode({ data, selected }) {
         <div className="min-w-0 w-full">
           <div className="w-full flex flex-row items-center justify-between gap-2">
             <div className="truncate text-sm font-semibold text-slate-900">{title}</div>
-            <div
-              className={joinClassNames(
-                'rounded-full px-2 py-0.5 inline-flex items-center gap-1.5',
-                statusVisual.pillClass,
-              )}
-            >
-              <span className={joinClassNames('h-2 w-2 rounded-full', statusVisual.dotClass)} />
-              <span className={joinClassNames('text-xs font-medium', statusVisual.pillClass)}>
-                {statusLabel}
-              </span>
+            <div className="mr-6">
+              <IconButton
+                aria-label="Edit skill"
+                title="Edit"
+                size="sm"
+                variant="ghost"
+                onClick={data.onEdit}
+                disabled={!data.onEdit}
+                className="h-7 w-7"
+              >
+                <EditIcon className="h-4 w-4" />
+              </IconButton>
+            </div>
+            <div className="nodrag flex items-center gap-1.5">
+              <div
+                className={joinClassNames(
+                  'rounded-full px-2 py-0.5 inline-flex items-center gap-1.5',
+                  statusVisual.pillClass,
+                )}
+              >
+                <span className={joinClassNames('h-2 w-2 rounded-full', statusVisual.dotClass)} />
+                <span className={joinClassNames('text-xs font-medium', statusVisual.pillClass)}>
+                  {statusLabel}
+                </span>
+              </div>
             </div>
           </div>
           {metaParts.length ? (
@@ -131,29 +151,28 @@ export function SkillNode({ data, selected }) {
         </div>
       </div>
       {status === 'unlockable' ? (
-        <div className="nodrag mt-2 flex items-center justify-end gap-2">
-          <Button size="sm" variant="secondary" onClick={data.onEdit}>
-            Edit
-          </Button>
-          <Button size="sm" variant="secondary" onClick={data.onUnlock}>
+        <div className="nodrag mt-4 flex items-center justify-end gap-1.5">
+          <Button
+            size="sm"
+            variant="secondary"
+            className={actionButtonClass}
+            onClick={data.onUnlock}
+          >
+            <OpenLockIcon className="h-4 w-4" />
             Unlock
           </Button>
         </div>
       ) : null}
       {status === 'unlocked' ? (
-        <div className="nodrag mt-2 flex items-center justify-end gap-2">
-          <Button size="sm" variant="secondary" onClick={data.onEdit}>
-            Edit
-          </Button>
-          <Button size="sm" variant="secondary" onClick={data.onComplete}>
+        <div className="nodrag mt-2 flex items-center justify-end gap-1.5">
+          <Button
+            size="sm"
+            variant="secondary"
+            className={actionButtonClass}
+            onClick={data.onComplete}
+          >
+            <CheckIcon className="h-4 w-4" />
             Complete
-          </Button>
-        </div>
-      ) : null}
-      {status !== 'unlockable' && status !== 'unlocked' ? (
-        <div className="nodrag mt-2 flex justify-end">
-          <Button size="sm" variant="secondary" onClick={data.onEdit}>
-            Edit
           </Button>
         </div>
       ) : null}
