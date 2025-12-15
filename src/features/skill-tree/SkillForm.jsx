@@ -12,14 +12,46 @@ function normalizeTitle(rawTitle) {
 /**
  * @param {{
  *   existingTitles: string[],
- *   onCreate: (args: { title: string, description?: string, cost?: number, level?: number }) => void,
+ *   initialValues?: { title?: string, description?: string, cost?: number, level?: number },
+ *   submitLabel?: string,
+ *   onSubmit: (args: { title: string, description?: string, cost?: number, level?: number }) => boolean,
  * }} props
  */
-export function CreateSkillForm({ existingTitles, onCreate }) {
-  const [title, setTitle] = React.useState('')
-  const [description, setDescription] = React.useState('')
-  const [cost, setCost] = React.useState('')
-  const [level, setLevel] = React.useState('')
+export function SkillForm({
+  existingTitles,
+  initialValues,
+  submitLabel = 'Create skill',
+  onSubmit,
+}) {
+  const createDefaults = React.useMemo(() => ({ cost: 1, level: 1 }), [])
+
+  const [title, setTitle] = React.useState(initialValues?.title ?? '')
+  const [description, setDescription] = React.useState(initialValues?.description ?? '')
+  const [cost, setCost] = React.useState(() => {
+    if (typeof initialValues?.cost === 'number') return String(initialValues.cost)
+    if (initialValues) return ''
+    return String(createDefaults.cost)
+  })
+  const [level, setLevel] = React.useState(() => {
+    if (typeof initialValues?.level === 'number') return String(initialValues.level)
+    if (initialValues) return ''
+    return String(createDefaults.level)
+  })
+
+  React.useEffect(() => {
+    setTitle(initialValues?.title ?? '')
+    setDescription(initialValues?.description ?? '')
+    setCost(() => {
+      if (typeof initialValues?.cost === 'number') return String(initialValues.cost)
+      if (initialValues) return ''
+      return String(createDefaults.cost)
+    })
+    setLevel(() => {
+      if (typeof initialValues?.level === 'number') return String(initialValues.level)
+      if (initialValues) return ''
+      return String(createDefaults.level)
+    })
+  }, [createDefaults.cost, createDefaults.level, initialValues])
 
   const normalizedTitles = React.useMemo(() => {
     return new Set(existingTitles.map(normalizeTitle))
@@ -43,17 +75,19 @@ export function CreateSkillForm({ existingTitles, onCreate }) {
     const nextCost = cost.trim() ? Number(cost) : undefined
     const nextLevel = level.trim() ? Number(level) : undefined
 
-    onCreate({
+    const saved = onSubmit({
       title: nextTitle,
       description: description.trim() ? description.trim() : undefined,
       cost: Number.isFinite(nextCost) ? nextCost : undefined,
       level: Number.isFinite(nextLevel) ? nextLevel : undefined,
     })
 
-    setTitle('')
-    setDescription('')
-    setCost('')
-    setLevel('')
+    if (saved) {
+      setTitle('')
+      setDescription('')
+      setCost(String(createDefaults.cost))
+      setLevel(String(createDefaults.level))
+    }
   }
 
   return (
@@ -66,6 +100,7 @@ export function CreateSkillForm({ existingTitles, onCreate }) {
         hint="Titles must be unique (case-insensitive)."
         error={titleError}
         required
+        autoFocus
       />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <TextInput
@@ -97,15 +132,21 @@ export function CreateSkillForm({ existingTitles, onCreate }) {
       />
       <div className="flex items-center justify-end">
         <Button type="submit" disabled={Boolean(titleError) || !title.trim()}>
-          Create skill
+          {submitLabel}
         </Button>
       </div>
     </form>
   )
 }
 
-CreateSkillForm.propTypes = {
+SkillForm.propTypes = {
   existingTitles: PropTypes.arrayOf(PropTypes.string).isRequired,
-  onCreate: PropTypes.func.isRequired,
+  initialValues: PropTypes.shape({
+    cost: PropTypes.number,
+    description: PropTypes.string,
+    level: PropTypes.number,
+    title: PropTypes.string,
+  }),
+  onSubmit: PropTypes.func.isRequired,
+  submitLabel: PropTypes.string,
 }
-

@@ -3,6 +3,10 @@ import PropTypes from 'prop-types'
 import { Handle, Position } from 'reactflow'
 
 import { Button } from '@/components/ui/Button'
+import { IconButton } from '@/components/ui/IconButton'
+import { CheckIcon } from '@/components/ui/icons/CheckIcon'
+import { EditIcon } from '@/components/ui/icons/EditIcon'
+import { OpenLockIcon } from '@/components/ui/icons/OpenLockIcon'
 import { joinClassNames } from '@/lib/utils'
 
 /**
@@ -12,28 +16,55 @@ import { joinClassNames } from '@/lib/utils'
 /**
  * @param {SkillStatus} status
  */
-function getStatusConfig(status) {
+function getStatusLabel(status) {
   if (status === 'completed') {
-    return {
-      label: 'Completed',
-      badgeClass: 'border-emerald-200 bg-emerald-50 text-emerald-900',
-    }
+    return 'Completed'
   }
   if (status === 'unlocked') {
-    return {
-      label: 'Unlocked',
-      badgeClass: 'border-sky-200 bg-sky-50 text-sky-900',
-    }
+    return 'Active'
   }
   if (status === 'unlockable') {
+    return 'Available'
+  }
+  return 'Locked'
+}
+
+/**
+ * @param {SkillStatus} status
+ */
+function getStatusVisualConfig(status) {
+  if (status === 'unlockable') {
     return {
-      label: 'Unlockable',
-      badgeClass: 'border-amber-200 bg-amber-50 text-amber-900',
+      containerClass: 'bg-white border-sky-400',
+      railClass: 'bg-sky-200',
+      pillClass: 'bg-sky-50 text-sky-900',
+      dotClass: 'bg-sky-500',
     }
   }
+
+  if (status === 'unlocked') {
+    return {
+      containerClass: 'bg-white border-violet-300',
+      railClass: 'bg-violet-200',
+      pillClass: 'bg-violet-50 text-violet-800',
+      dotClass: 'bg-violet-500',
+    }
+  }
+
+  if (status === 'completed') {
+    return {
+      containerClass: 'bg-white border-emerald-200',
+      railClass: 'bg-emerald-100',
+      pillClass: 'bg-emerald-50 text-emerald-900',
+      dotClass: 'bg-emerald-500',
+    }
+  }
+
   return {
-    label: 'Locked',
-    badgeClass: 'border-slate-200 bg-slate-50 text-slate-700',
+    containerClass: 'bg-slate-50 border-slate-300',
+    railClass: 'bg-slate-400',
+    pillClass: 'bg-slate-100 text-slate-700',
+    dotClass: 'bg-slate-500',
   }
 }
 
@@ -42,8 +73,10 @@ function getStatusConfig(status) {
  *   data: {
  *     title?: string,
  *     status?: SkillStatus,
+ *     description?: string,
  *     cost?: number,
  *     level?: number,
+ *     onEdit?: () => void,
  *     search?: { match?: boolean, highlighted?: boolean, dimmed?: boolean },
  *   },
  *   selected?: boolean,
@@ -51,11 +84,15 @@ function getStatusConfig(status) {
  */
 export function SkillNode({ data, selected }) {
   const title = typeof data?.title === 'string' && data.title.trim() ? data.title : 'Untitled'
+  const description =
+    typeof data?.description === 'string' && data.description.trim() ? data.description.trim() : ''
   const status = data?.status ?? 'locked'
-  const statusConfig = getStatusConfig(status)
+  const statusLabel = getStatusLabel(status)
+  const statusVisual = getStatusVisualConfig(status)
   const searchMatch = data?.search?.match === true
   const searchHighlighted = data?.search?.highlighted === true
   const searchDimmed = data?.search?.dimmed === true
+  const actionButtonClass = 'h-7 px-2 text-xs'
 
   const metaParts = []
   if (typeof data?.cost === 'number') metaParts.push(`Cost: ${data.cost}`)
@@ -64,49 +101,85 @@ export function SkillNode({ data, selected }) {
   return (
     <div
       className={joinClassNames(
-        'w-56 rounded-lg border bg-white px-3 py-2 shadow-sm',
+        'relative min-w-56 w-max overflow-hidden rounded-lg border px-3 py-2 shadow-sm',
+        statusVisual.containerClass,
         searchDimmed ? 'opacity-30' : null,
-        selected
-          ? 'border-sky-400 ring-2 ring-sky-200'
-          : searchMatch
-            ? 'border-fuchsia-400 ring-2 ring-fuchsia-200'
-            : searchHighlighted
-              ? 'border-sky-300 ring-1 ring-sky-100 shadow-md'
-              : 'border-slate-200',
+        selected ? 'ring-2 ring-sky-200' : null,
+        !selected && searchMatch ? 'ring-2 ring-fuchsia-200 shadow-md' : null,
+        !selected && !searchMatch && searchHighlighted ? 'ring-1 ring-sky-100 shadow-md' : null,
       )}
     >
+      <div
+        className={joinClassNames('absolute left-0 top-0 h-full w-1.5', statusVisual.railClass)}
+      />
       <Handle
         type="target"
         position={Position.Top}
         className="!h-3 !w-3 !border-2 !border-white !bg-slate-400"
       />
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="truncate text-sm font-semibold text-slate-900">{title}</div>
+      <div className="w-full flex flex-row items-start justify-start gap-2">
+        <div className="min-w-0 w-full mb-4 pt-1">
+          <div className="w-full flex flex-row items-center justify-between gap-2">
+            <div className="max-w-[250px] truncate text-lg font-semibold text-slate-600">
+              {title}
+            </div>
+            <div className="mr-6">
+              <IconButton
+                aria-label="Edit skill"
+                title="Edit"
+                size="sm"
+                variant="ghost"
+                onClick={data.onEdit}
+                disabled={!data.onEdit}
+                className="h-7 w-7"
+              >
+                <EditIcon className="h-4 w-4" />
+              </IconButton>
+            </div>
+            <div className="nodrag flex items-center gap-1.5">
+              <div
+                className={joinClassNames(
+                  'rounded-full px-2 py-0.5 inline-flex items-center gap-1.5',
+                  statusVisual.pillClass,
+                )}
+              >
+                <span className={joinClassNames('h-2 w-2 rounded-full', statusVisual.dotClass)} />
+                <span className={joinClassNames('text-xs font-medium', statusVisual.pillClass)}>
+                  {statusLabel}
+                </span>
+              </div>
+            </div>
+          </div>
           {metaParts.length ? (
             <div className="mt-0.5 text-xs text-slate-600">{metaParts.join(' • ')}</div>
           ) : null}
         </div>
-        <span
-          className={joinClassNames(
-            'shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium',
-            statusConfig.badgeClass,
-          )}
-          aria-label={`Status: ${statusConfig.label}`}
-        >
-          {statusConfig.label}
-        </span>
       </div>
+      {description ? (
+        <div className="mt-1 w-full max-w-[400px] text-sm text-slate-600">{description}</div>
+      ) : null}
       {status === 'unlockable' ? (
-        <div className="nodrag mt-2 flex justify-end">
-          <Button size="sm" variant="secondary" onClick={data.onUnlock}>
+        <div className="nodrag mt-4 flex items-center justify-end gap-1.5">
+          <Button
+            size="sm"
+            variant="secondary"
+            className={actionButtonClass}
+            onClick={data.onUnlock}
+          >
+            <OpenLockIcon className="h-4 w-4" />
             Unlock
           </Button>
         </div>
       ) : null}
       {status === 'unlocked' ? (
-        <div className="nodrag mt-2 flex justify-end">
-          <Button size="sm" variant="secondary" onClick={data.onComplete}>
+        <div className="nodrag mt-2 flex items-center justify-end gap-1.5">
+          <Button
+            size="sm"
+            variant="secondary"
+            className={actionButtonClass}
+            onClick={data.onComplete}
+          >
+            <CheckIcon className="h-4 w-4" />
             Complete
           </Button>
         </div>
@@ -123,8 +196,10 @@ export function SkillNode({ data, selected }) {
 SkillNode.propTypes = {
   data: PropTypes.shape({
     cost: PropTypes.number,
+    description: PropTypes.string,
     level: PropTypes.number,
     onComplete: PropTypes.func,
+    onEdit: PropTypes.func,
     onUnlock: PropTypes.func,
     search: PropTypes.shape({
       dimmed: PropTypes.bool,
