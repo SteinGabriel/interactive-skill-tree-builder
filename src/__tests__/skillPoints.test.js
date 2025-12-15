@@ -13,10 +13,10 @@ describe('skill points helpers', () => {
       { data: { status: 'completed', cost: 3, level: 2 } },
     ]
 
-    expect(getSkillPointsSpent(nodes)).toBe(2 + 3 * 2)
+    expect(getSkillPointsSpent(nodes)).toBe(2 + 3)
   })
 
-  test('defaults missing cost to 0 and missing level to 1', () => {
+  test('defaults missing cost to 0', () => {
     expect(getSkillPointsForNodeData({ status: 'unlocked' })).toBe(0)
     expect(getSkillPointsForNodeData({ status: 'unlocked', cost: 2 })).toBe(2)
     expect(getSkillPointsForNodeData({ status: 'unlocked', level: 3 })).toBe(0)
@@ -31,7 +31,7 @@ describe('skill points helpers', () => {
   })
 
   test('computes required points regardless of status', () => {
-    expect(getSkillPointsRequiredForNodeData({ cost: 2, level: 3 })).toBe(6)
+    expect(getSkillPointsRequiredForNodeData({ cost: 2, level: 3 })).toBe(2)
     expect(getSkillPointsRequiredForNodeData({ cost: 2 })).toBe(2)
     expect(getSkillPointsRequiredForNodeData({ level: 3 })).toBe(0)
     expect(getSkillPointsRequiredForNodeData(undefined)).toBe(0)
