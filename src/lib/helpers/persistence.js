@@ -5,15 +5,29 @@
  */
 
 export const SKILL_TREE_STORAGE_KEY = 'skill-tree-builder'
+export const DEFAULT_SKILL_POINTS_TOTAL = 20
 
 /**
  * @returns {PersistedTreeState}
  */
 export function createEmptyPersistedTreeState() {
   return {
+    skillPointsTotal: DEFAULT_SKILL_POINTS_TOTAL,
     nodes: [],
     edges: [],
   }
+}
+
+/**
+ * @param {unknown} value
+ * @returns {number}
+ */
+function coerceSkillPointsTotal(value) {
+  const next =
+    typeof value === 'number' && Number.isFinite(value)
+      ? Math.floor(value)
+      : DEFAULT_SKILL_POINTS_TOTAL
+  return next >= 0 ? next : DEFAULT_SKILL_POINTS_TOTAL
 }
 
 /**
@@ -92,6 +106,7 @@ function coerceTreeState(value) {
 
   const rawNodes = Array.isArray(value.nodes) ? value.nodes : []
   const rawEdges = Array.isArray(value.edges) ? value.edges : []
+  const skillPointsTotal = coerceSkillPointsTotal(value.skillPointsTotal)
 
   const nodes = []
   for (const rawNode of rawNodes) {
@@ -105,18 +120,20 @@ function coerceTreeState(value) {
     if (edge) edges.push(edge)
   }
 
-  return { nodes, edges }
+  return { skillPointsTotal, nodes, edges }
 }
 
 /**
- * @param {PersistedTreeState | { nodes: PersistedNode[], edges: PersistedEdge[] }} state
+ * @param {PersistedTreeState | { nodes: PersistedNode[], edges: PersistedEdge[], skillPointsTotal?: number }} state
  * @returns {string}
  */
 export function serialize(state) {
   const nodes = Array.isArray(state.nodes) ? state.nodes : []
   const edges = Array.isArray(state.edges) ? state.edges : []
+  const skillPointsTotal = coerceSkillPointsTotal(state.skillPointsTotal)
 
   const persisted = {
+    skillPointsTotal,
     nodes: nodes.map((node) => ({
       ...node,
       data: {
@@ -176,7 +193,7 @@ export function loadFromLocalStorage(key = SKILL_TREE_STORAGE_KEY) {
 }
 
 /**
- * @param {PersistedTreeState | { nodes: PersistedNode[], edges: PersistedEdge[] }} state
+ * @param {PersistedTreeState | { nodes: PersistedNode[], edges: PersistedEdge[], skillPointsTotal?: number }} state
  * @param {string} [key]
  * @returns {boolean}
  */

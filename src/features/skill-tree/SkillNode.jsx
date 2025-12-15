@@ -69,6 +69,7 @@ function getStatusVisualConfig(status) {
 
 /**
  * @param {{
+ *   id: string,
  *   data: {
  *     title?: string,
  *     status?: SkillStatus,
@@ -81,7 +82,7 @@ function getStatusVisualConfig(status) {
  *   selected?: boolean,
  * }} props
  */
-export function SkillNode({ data, selected }) {
+export function SkillNode({ id, data, selected }) {
   const title = typeof data?.title === 'string' && data.title.trim() ? data.title : 'Untitled'
   const description =
     typeof data?.description === 'string' && data.description.trim() ? data.description.trim() : ''
@@ -99,8 +100,14 @@ export function SkillNode({ data, selected }) {
 
   return (
     <div
+      data-skill-node="true"
+      data-skill-node-id={id}
+      tabIndex={0}
+      role="group"
+      aria-label={`${title}. ${statusLabel}.`}
       className={joinClassNames(
         'relative min-w-56 w-max overflow-hidden rounded-lg border px-3 py-2 shadow-sm',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 ring-offset-white',
         statusVisual.containerClass,
         searchDimmed ? 'opacity-30' : null,
         selected ? 'ring-2 ring-sky-200' : null,
