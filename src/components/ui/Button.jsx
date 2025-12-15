@@ -1,5 +1,4 @@
 import React from 'react'
-import PropTypes from 'prop-types'
 import { joinClassNames } from '@/lib/utils'
 
 const BASE_CLASSES =
@@ -39,13 +38,3 @@ export const Button = React.forwardRef(function Button(
     />
   )
 })
-
-Button.propTypes = {
-  children: PropTypes.node,
-  className: PropTypes.string,
-  disabled: PropTypes.bool,
-  onClick: PropTypes.func,
-  size: PropTypes.oneOf(['sm', 'md', 'lg']),
-  type: PropTypes.oneOf(['button', 'submit', 'reset']),
-  variant: PropTypes.oneOf(['primary', 'secondary', 'danger']),
-}

@@ -1,5 +1,4 @@
 import React from 'react'
-import PropTypes from 'prop-types'
 
 import { IconButton } from '@/components/ui/IconButton'
 import { Panel } from '@/components/ui/Panel'
@@ -69,11 +68,3 @@ export function Modal({ open, title, onClose, children }) {
     </div>
   )
 }
-
-Modal.propTypes = {
-  children: PropTypes.node.isRequired,
-  onClose: PropTypes.func.isRequired,
-  open: PropTypes.bool.isRequired,
-  title: PropTypes.string.isRequired,
-}
-

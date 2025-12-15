@@ -1,5 +1,4 @@
 import React from 'react'
-import PropTypes from 'prop-types'
 import { joinClassNames } from '@/lib/utils'
 
 const LABEL_CLASSES = 'text-sm font-medium text-slate-900'
@@ -62,12 +61,3 @@ export const TextArea = React.forwardRef(function TextArea(
     </div>
   )
 })
-
-TextArea.propTypes = {
-  className: PropTypes.string,
-  error: PropTypes.string,
-  hint: PropTypes.string,
-  id: PropTypes.string,
-  label: PropTypes.string,
-  rows: PropTypes.number,
-}

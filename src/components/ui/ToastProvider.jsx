@@ -1,5 +1,4 @@
 import React from 'react'
-import PropTypes from 'prop-types'
 import { ToastContext } from '@/components/ui/toastContext'
 import { joinClassNames } from '@/lib/utils'
 
@@ -116,8 +115,4 @@ export function ToastProvider({ children }) {
       </div>
     </ToastContext.Provider>
   )
-}
-
-ToastProvider.propTypes = {
-  children: PropTypes.node,
 }
